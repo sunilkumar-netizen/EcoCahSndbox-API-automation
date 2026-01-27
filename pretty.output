@@ -1,0 +1,163 @@
+Feature: Sasai Payment Gateway - App Token API Testing # features/1_appToken.feature:1
+  As a merchant
+  I want to get an app token from Sasai Payment Gateway API
+  So that I can authenticate and access payment services
+  Background:   # features/1_appToken.feature:6
+
+  @smoke @appToken @sasai
+  Scenario: Get app token with valid credentials     # features/1_appToken.feature:10
+    Given API is available                           # steps/common_steps.py:9
+    Given I have valid Sasai login credentials       # steps/appToken_steps.py:21
+    When I send POST request to "/bff/v1/auth/token" # steps/common_steps.py:28
+    Then response status code should be 200          # steps/common_steps.py:74
+    And response body should contain "accessToken"   # steps/common_steps.py:90
+    And I store the "accessToken" from response      # steps/common_steps.py:134
+
+Feature: Sasai Payment Gateway - OTP Request API Testing # features/2_otpRequest.feature:1
+  As a merchant
+  I want to request OTP from Sasai Payment Gateway API
+  So that I can verify user identity for secure transactions
+  Background:   # features/2_otpRequest.feature:6
+
+  @smoke @otp @sasai
+  Scenario: Request OTP with valid parameters                            # features/2_otpRequest.feature:11
+    Given API is available                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                          # steps/otp_steps.py:9
+    Given I have valid OTP request details                               # steps/otp_steps.py:38
+    When I send authenticated POST request to "/bff/v2/auth/otp/request" # steps/otp_steps.py:105
+    Then response status code should be 200                              # steps/common_steps.py:74
+    And response time should be less than 5000 ms                        # steps/common_steps.py:127
+
+Feature: Sasai Payment Gateway - OTP Verify API Testing # features/3_otpVerify.feature:1
+  As a merchant
+  I want to verify OTP from Sasai Payment Gateway API
+  So that I can complete user authentication for secure transactions
+  Background:   # features/3_otpVerify.feature:6
+
+  @smoke @otp_verify @sasai
+  Scenario: Verify OTP with valid parameters                          # features/3_otpVerify.feature:11
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    Given I have valid OTP verification details                       # steps/otp_verify_steps.py:10
+    When I send OTP verification request to "/bff/v1/auth/otp/verify" # steps/otp_verify_steps.py:212
+    Then response status code should be 200                           # steps/common_steps.py:74
+    And response time should be less than 5000 ms                     # steps/common_steps.py:127
+    And response should contain OTP verification status               # steps/otp_verify_steps.py:234
+
+Feature: Sasai Payment Gateway - PIN Verify API Testing # features/4_pinVerify.feature:1
+  As a merchant
+  I want to verify PIN from Sasai Payment Gateway API
+  So that I can authenticate users securely for transactions
+  Background:   # features/4_pinVerify.feature:9
+
+  @smoke @pin_verify @sasai
+  Scenario: Verify PIN with valid parameters                          # features/4_pinVerify.feature:14
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    Given I have valid PIN verification details                       # steps/pin_verify_steps.py:10
+    When I send PIN verification request to "/bff/v4/auth/pin/verify" # steps/pin_verify_steps.py:194
+    Then response status code should be 200                           # steps/common_steps.py:74
+      Assertion Failed: Expected status code 200, but got 401. Response: {"errorUserMsg":"Service provider could not process this request. Please try again later.","step":"uri=/ums/v3/login/pin","referenceId":"XhvbWTNVhalo6e_TWRs2po2kDMd02wdkm1ys1OoW","traceId":"0000000000
+
+    And response time should be less than 5000 ms                     # None
+    And response should contain PIN verification status               # None
+
+Feature: Sasai Payment Gateway - Login Devices API Testing # features/5_loginDevices.feature:1
+  As a user
+  I want to retrieve my login devices from Sasai Payment Gateway API
+  So that I can view all devices where I'm logged in
+  Background:   # features/5_loginDevices.feature:9
+
+  @smoke @login_devices @sasai
+  Scenario: Get login devices with valid user token                   # features/5_loginDevices.feature:15
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                 # steps/login_devices_steps.py:9
+    Given I have valid user authentication                            # steps/login_devices_steps.py:91
+    When I send login devices request to "/bff/v1/user/login-devices" # steps/login_devices_steps.py:164
+    Then response status code should be 200                           # steps/common_steps.py:74
+      Assertion Failed: Expected status code 200, but got 401. Response: {"errorUserMsg":"Your session has timed out. Please log out and log in again to continue.","errorCode":"error.auth.token.expired","step":"","referenceId":"2145f8a667eed916","traceId":"2145f8a667eed916
+
+    And response time should be less than 5000 ms                     # None
+    And response should contain login devices list                    # None
+
+Feature: Sasai Payment Gateway - Merchant Lookup API Testing (Pay to Merchant) # features/6_merchantLookup.feature:1
+  As a user
+  I want to lookup merchant details from Sasai Payment Gateway API
+  So that I can verify merchant information before making a payment
+  Background:   # features/6_merchantLookup.feature:10
+
+  @smoke @merchant_lookup @pay_to_merchant @sasai
+  Scenario: Lookup merchant with valid parameters                                                         # features/6_merchantLookup.feature:16
+    Given API is available                                                                                # steps/common_steps.py:9
+    And I am authenticated with valid app token                                                           # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                                     # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                                                # steps/login_devices_steps.py:91
+    And I have merchant lookup parameters                                                                 # steps/merchant_lookup_steps.py:17
+    When I send merchant lookup request to "/catalog/v1/categories/SZWC10002/operators/SZWOM00001/lookup" # steps/merchant_lookup_steps.py:238
+    Then response status code should be 200                                                               # steps/common_steps.py:74
+      Assertion Failed: Expected status code 200, but got 401. Response: {"errorUserMsg":"Unauthorized access - token expired at [Wed Jan 21 06:20:37 GMT 2026]","step":"uri=/catalog/secure/error/custom-message","referenceId":"_cs3LWHFmORXvq38hsPp3Gjm7H-lDfHWGyiUes8a","trac
+
+    And response time should be less than 5000 ms                                                         # None
+    And response should contain merchant details                                                          # None
+
+Feature: Sasai Payment Gateway - Payment Options API Testing (Merchant Payment) # features/7_paymentOptions.feature:1
+  As a user
+  I want to verify payment options from Sasai Payment Gateway API
+  So that I can see available payment methods before making a merchant payment
+  Background:   # features/7_paymentOptions.feature:10
+
+  @smoke @payment_options @merchant_payment @sasai
+  Scenario: Verify payment options with valid parameters             # features/7_paymentOptions.feature:16
+    Given API is available                                           # steps/common_steps.py:9
+    And I am authenticated with valid app token                      # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                # steps/login_devices_steps.py:9
+    Given I have valid user authentication                           # steps/login_devices_steps.py:91
+    And I have service type "sasai-app-payment"                      # steps/payment_options_steps.py:16
+    When I send payment options request to "/bff/v1/payment/options" # steps/payment_options_steps.py:70
+    Then response status code should be 200                          # steps/common_steps.py:74
+      Assertion Failed: Expected status code 200, but got 401. Response: {"errorUserMsg":"Your session has timed out. Please log out and log in again to continue.","errorCode":"error.auth.token.expired","step":"","referenceId":"5978619f83f9a2d3","traceId":"5978619f83f9a2d3
+
+    And response time should be less than 5000 ms                    # None
+    And response should contain payment options                      # None
+
+Feature: Sasai Payment Gateway - Utility Payment API Testing (Merchant Payment) # features/8_utilityPayment.feature:1
+  As a user
+  I want to make utility payments through Sasai Payment Gateway API
+  So that I can complete merchant payments for utility services
+  Background:   # features/8_utilityPayment.feature:10
+
+  @smoke @utility_payment @merchant_payment @sasai
+  Scenario: Create utility payment with valid parameters                   # features/8_utilityPayment.feature:16
+    Given API is available                                                 # steps/common_steps.py:9
+    And I am authenticated with valid app token                            # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                      # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                 # steps/login_devices_steps.py:91
+    And I have utility payment request body                                # steps/utility_payment_steps.py:17
+    When I send utility payment request to "/bff/v2/order/utility/payment" # steps/utility_payment_steps.py:296
+    Then response status code should be 200                                # steps/common_steps.py:74
+      Assertion Failed: Expected status code 200, but got 401. Response: {"errorUserMsg":"Your session has timed out. Please log out and log in again to continue.","errorCode":"error.auth.token.expired","step":"","referenceId":"2756ac6a2aac0d2b","traceId":"2756ac6a2aac0d2b
+
+    And response time should be less than 10000 ms                         # None
+    And response should contain payment confirmation                       # None
+
+Feature: Sasai Payment Gateway - Order Details API Testing (Merchant Payment) # features/9_orderDetails.feature:1
+  As a user
+  I want to retrieve order details from Sasai Payment Gateway API
+  So that I can view payment details that were completed in the merchant flow
+  Background:   # features/9_orderDetails.feature:10
+
+  @smoke @order_details @merchant_payment @sasai
+  Scenario: Get order details with valid order reference                            # features/9_orderDetails.feature:16
+    Given API is available                                                          # steps/common_steps.py:9
+    And I am authenticated with valid app token                                     # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                               # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                          # steps/login_devices_steps.py:91
+    And I have order reference "176888-6726-665218"                                 # steps/order_details_steps.py:16
+    When I send order details request to "/bff/v2/order/details/176888-6726-665218" # steps/order_details_steps.py:54
+    Then response status code should be 200                                         # steps/common_steps.py:74
+      Assertion Failed: Expected status code 200, but got 401. Response: {"errorUserMsg":"Your session has timed out. Please log out and log in again to continue.","errorCode":"error.auth.token.expired","step":"","referenceId":"18e4e1394573f206","traceId":"18e4e1394573f206
+
+    And response time should be less than 5000 ms                                   # None
+    And response should contain order details                                       # None
+

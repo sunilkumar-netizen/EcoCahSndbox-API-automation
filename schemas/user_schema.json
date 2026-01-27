@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "User Response Schema",
+  "type": "object",
+  "required": [
+    "user_id",
+    "email",
+    "username",
+    "created_at"
+  ],
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Unique user identifier"
+    },
+    "email": {
+      "type": "string",
+      "description": "User email address",
+      "format": "email"
+    },
+    "username": {
+      "type": "string",
+      "description": "Username",
+      "minLength": 3,
+      "maxLength": 50
+    },
+    "first_name": {
+      "type": "string",
+      "description": "First name"
+    },
+    "last_name": {
+      "type": "string",
+      "description": "Last name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number",
+      "pattern": "^\\+?[1-9]\\d{1,14}$"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "description": "Date of birth",
+      "format": "date"
+    },
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "zip_code": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "suspended",
+        "deleted"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,168 @@
+# QA Environment Configuration - Sasai Payment Gateway (Sandbox)
+environment: qa
+
+api:
+  base_url: https://sandbox.sasaipaymentgateway.com
+  timeout: 30
+  retry_count: 3
+  retry_delay: 2
+
+auth:
+  type: bearer
+  token: "" # Will be obtained from login
+  username: "64543532-3dee-43bc-b42e-d6b503f7fbdb"
+  password: "iW8I*0bZ"
+  tenant_id: "sasai"
+  client_id: "sasai-pay-client"
+  api_key_header: X-API-Key
+  api_key_value: ""
+
+# OTP Verify Configuration
+otp_verify:
+  expired_otp_reference_id: "00000000-0000-0000-0000-000000000000"
+  invalid_user_reference_id: "invalid-user-ref-12345"
+
+# OTP Request Configuration
+otp:
+  sender_id: "771222221"
+  country_code: "+263"
+  default_purpose: "0" # 0 for authentication
+  default_mode: "0" # 0 for SMS, 1 for Email
+
+# PIN Verify Configuration
+pin_verify:
+  # Sample encrypted PIN from the curl request (RSA encrypted)
+  sample_encrypted_pin: "ZXodNbUKicCm/E01R6xI6NLUxqxP4g+mZAbQik8VYCeJYDGL9n6hYKzCAnuAAWcvs2nSsw0ZTN8wisiCyxYOmxRZBGYNyiH41cTOkNkUdpkP7su0Af/Mhmnp6SWDZxysO3q5Qp+qdroDSVFAepf2xJnR8X/T3INSveKGclVrd/8YkR2i4uyyHmIDnkMsWS7gLZQhpCX3gKGsLY/wT9zyOX0pHgotCUSUEGyJovNXs/P5mlvng6yMl3ZWY+2tgL1zx9pmvQtv7WKxvfKghGtRH2VQlwcviTorZdFUSdOx79xmhqxlSMNMUC5DlMnTEGT5io9MRMLbcTwXbk7T7Xuz2g=="
+  invalid_encrypted_pin: "invalid_encrypted_pin_12345"
+  empty_pin: ""
+  default_user_reference_id: "a63e59b7-ec55-4ba0-81e5-2cbfbf0da234"
+  invalid_user_reference_id: "invalid-user-ref-12345"
+  default_tenant_id: "sasai"
+  default_azp: "sasai-pay-client"
+  default_device_model: "Postman API Device"
+  malformed_test_string: "test"
+  malformed_pin: 12345 # Should be string for testing
+  malformed_user_ref: 99999 # Should be string UUID for testing
+
+# Login Devices Configuration
+login_devices:
+  # Sample user token from PIN verification (this will be obtained dynamically in tests)
+  sample_user_token: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIxWVhKUzd2bDNLbThtM2pKRUs5OVN4T2ljWVhBd2tUX0FnMTlmYUdDWmNZIn0.eyJleHAiOjE3Njg5NzY0MzcsImlhdCI6MTc2ODk3NTUzNywianRpIjoiMjUzMzg4YWYtZmYyNy00NDVhLTkwODgtMzk2ZWY5NTY5MTdjIiwiaXNzIjoiaHR0cHM6Ly9zYW5kYm94LWF1dGhuZXcuc2FzYWlwYXltZW50Z2F0ZXdheS5jb20vcmVhbG1zL3Nhc2FpIiwiYXVkIjpbInNhc2FpLWFwaS1jbGllbnQiLCJhY2NvdW50Il0sInN1YiI6ImI4NGRmYTdlLWNhY2ItNDI4MS1iOGJmLTc5YTMwMTBjMzVjYSIsInR5cCI6IkJlYXJlciIsImF6cCI6InNhc2FpLXBheS1jbGllbnQiLCJzaWQiOiJkMWM5ZWM2OC1kNjkwLTQxYjItYmQ0NS0zMzJjZDY4YjBjMmUiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbImh0dHBzOi8vZGV2LnNhc2FpcGF5bWVudGdhdGV3YXkuY29tIiwiaHR0cHM6Ly9zYW5kYm94LnNhc2FpcGF5bWVudGdhdGV3YXkuY29tIiwiaHR0cHM6Ly9zdGFnaW5nLnNhc2FpcGF5bWVudGdhdGV3YXkuY29tIiwiaHR0cDovL2xvY2FsaG9zdDozMDAwIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwic2FzYWktZXhwbG9yZS1jb25wbHVzLXVzZXIiLCJzYXNhaS1wYXktdXNlciIsInNhc2FpLWV4cGxvcmUtY29uLXVzZXIiLCJkZWZhdWx0LXJvbGVzLXNhc2FpIl19LCJzY29wZSI6Im9wZW5pZCBvZmZsaW5lX2FjY2VzcyBlbWFpbCA1Mjg2OTc1MC00ZTZmLTRiYjktOWQ0NS1jYzQwMWYwZGExMjMgbWlkMSBwcm9maWxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImNvdW50cnlDb2RlIjoiWlciLCJuYW1lIjoiVGVzdCBFY29jYXNoIFVzZXIgIFRlc3QgRWNvY2FzaCBVc2VyICIsImN1c3RvbWVySWQiOiJlZjFlYmY1Ny04ZTliLTRjNmMtYmU4OS1kZTcyZGZkNzM3NmMiLCJ0ZW5hbnRJZCI6InNhc2FpIiwibWlkIjoiNTI4Njk3NTAtNGU2Zi00YmI5LTlkNDUtY2M0MDFmMGRhMTIzIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiZWYxZWJmNTctOGU5Yi00YzZjLWJlODktZGU3MmRmZDczNzZjIiwiZ2l2ZW5fbmFtZSI6IlRlc3QgRWNvY2FzaCBVc2VyICIsImZhbWlseV9uYW1lIjoiVGVzdCBFY29jYXNoIFVzZXIgIiwiZW1haWwiOiJzcmVlbmF0aHZqKzMzQGltc3MuY28uaW4ifQ.IqPOTnAuUY097UwltgWDPf3B68levUw_HcNZRAy1V6zvAD_JpT1e8KCq5IR-9SC86_GU6y0IdEFyW6KX_zMaz04B30rgVVlQyKSbujCQFdPmFvBrs51FU9HNczvPmbUw07MO5Ix9lw29FPoyRVj_DaOJ3aSt05CAqSNMgDUYwo_HxwGtWUS-gzeaIbQqTRl2VntutSbenRtSZRX2QBADKZCq66nXmZzaCE62qc1ez4BbOf8Di2n7mgMYgedESw9Br7AdG0vSqzeRW5wSdOEM8dxBjRhJnmk4wVdwsvNseQrJm_pJXjS7SJ3MwddTZwr1JIVjz-Cujsuu8bSBWiUljg"
+
+# Merchant Lookup Configuration (Pay to Merchant Flow)
+merchant_lookup:
+  # Merchant lookup endpoint parameters
+  category_id: "SZWC10002"
+  operator_id: "SZWOM00001"
+  country_code: "ZW"
+  merchant_id: "52869750-4e6f-4bb9-9d45-cc401f0da123"
+  currency: "USD"
+  q1_value: "001535" # Q1 parameter value
+  request_id: "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"
+
+  # Invalid test data
+  invalid_category_id: "INVALID_CAT"
+  invalid_operator_id: "INVALID_OP"
+  invalid_country_code: "XX"
+  invalid_merchant_id: "invalid-merchant-id"
+  invalid_currency: "XXX"
+  invalid_q1_value: "999999"
+  expired_user_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MDAwMDAwMDB9.expired"
+  invalid_user_token: "invalid_user_token_12345"
+  malformed_token: "not.a.valid.jwt.token"
+  empty_token: ""
+
+headers:
+  Content-Type: application/json
+  Accept: application/json
+  X-Client-Id: ecocash-automation-client
+  X-Environment: qa
+
+endpoints:
+  # ✅ CONFIGURED - Authentication API
+  auth:
+    token: /bff/v1/auth/token # App Token API (CONFIGURED)
+    refresh: /bff/v1/auth/refresh # TODO: Add if available
+    logout: /bff/v1/auth/logout # TODO: Add if available
+    otp_request: /bff/v2/auth/otp/request # OTP Request API (CONFIGURED)
+    otp_verify: /bff/v1/auth/otp/verify # OTP Verify API (CONFIGURED)
+    pin_verify: /bff/v4/auth/pin/verify # PIN Verify API (CONFIGURED)
+
+  # ⏳ TODO - Add your actual payment/transaction endpoints below
+  # Example format:
+  # payments:
+  #   initiate: /bff/v1/payments/initiate
+  #   status: /bff/v1/payments/{transaction_id}/status
+  #   verify: /bff/v1/payments/verify
+  payments:
+    create: /bff/v1/payments # TODO: Replace with actual endpoint
+    get: /bff/v1/payments/{payment_id} # TODO: Replace with actual endpoint
+    list: /bff/v1/payments # TODO: Replace with actual endpoint
+
+  # ⏳ TODO - Add other Sasai endpoints as you receive them
+  transactions:
+    # TODO: Add transaction endpoints here
+  wallets:
+    # TODO: Add wallet endpoints here
+  merchants:
+    # TODO: Add merchant endpoints here
+
+# Payment Options Configuration (Merchant Payment Flow - Step 7)
+payment_options:
+  service_type: "sasai-app-payment"
+  request_id: "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"
+  invalid_service_type: "invalid-service"
+  endpoint: "/bff/v1/payment/options"
+
+# Utility Payment Configuration (Merchant Payment Flow - Step 8)
+utility_payment:
+  category_id: "SZWC10002"
+  operator_id: "SZWOM00001"
+  q1_value: "001535"
+  integrator_txn_id: "c26af4c4-a62b-47f2-84e3-0167e4ece571"
+  instrument_token: "b92b7a27-99cb-4c72-9731-3df21d791334"
+  encrypted_pin: "Z9jXnPVARjr+J5ZHBlMIw93wMCzEmuXv6jpbl7dXQ7PcHcEiiywjyrO3DqSLGT/g1XyKTj7AzYOdgRfSoGbAOBeBefi5dhK+KIvEu+2e+pxHbj4vcKdJEZEwuv0XlnT7XWCioCAkZdqn+edZZIyAYxa4yux7fnt+Ek2HRNT1ic0Rh46buOoXngjxlu3VIFRh1KvVB7DcnjdtOH9u9qMEDgIFLNKiB3YOHwzYNlu+YbcrToH01xGJEUZ5dWy+Hc9pTOB8dQ+lvGsHZ+u4dzkCf09avVWlP9ljnEgefNPDVtoe51Z1abFVm2Bptdw8vW2DsuqP5HpH8rROu6vr7W9mjg=="
+  public_key_alias: "payment-links"
+  payment_method: "wallet"
+  provider: "ecocash"
+  fee_amount: 0
+  payer_amount: 7
+  currency: "USD"
+  subtype: "merchant-pay"
+  channel: "sasai-super-app"
+  endpoint: "/bff/v2/order/utility/payment"
+  # Device information
+  device_ip: "192.0.0.2"
+  device_model: "Samsung"
+  device_os: "Android"
+  device_os_version: "13"
+  app_version: "1.4.1"
+  app_package: "com.sasai.sasaipay"
+
+# Order Details Configuration (Merchant Payment Flow - Step 9)
+order_details:
+  order_reference: "176888-6726-665218"
+  request_id: "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"
+  invalid_order_reference: "invalid-format"
+  non_existent_order: "999999-9999-999999"
+  different_user_order: "888888-8888-888888"
+  endpoint: "/bff/v2/order/details"
+  sim_number: "SIM_771222221"
+  device_id: "deviceID_771222221"
+
+database:
+  enabled: false
+  host: qa-db.example.com
+  port: 5432
+  name: ecocash_qa
+
+logging:
+  level: INFO
+  console: true
+  file: true
+  file_path: logs/qa.log
+
+test_data:
+  default_currency: USD
+  default_country: US
+  test_user_phone: +1234567890
