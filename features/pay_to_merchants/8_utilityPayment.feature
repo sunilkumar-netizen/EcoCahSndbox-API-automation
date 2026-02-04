@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - Utility Payment API Testing (Merchant Payment)
+Feature: Pay to Merchant- Payment
     As a user
     I want to make utility payments through Sasai Payment Gateway API
     So that I can complete merchant payments for utility services

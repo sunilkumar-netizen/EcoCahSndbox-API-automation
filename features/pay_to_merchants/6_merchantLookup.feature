@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - Merchant Lookup API Testing (Pay to Merchant)
+Feature: Pay to Merchant- Lookup
     As a user
     I want to lookup merchant details from Sasai Payment Gateway API
     So that I can verify merchant information before making a payment

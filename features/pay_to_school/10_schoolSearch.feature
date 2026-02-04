@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - School/Church/Merchant Search API Testing (Pay to School Flow)
+Feature: Pay to School- search
     As a user
     I want to search for schools, churches, and merchants
     So that I can make payments to these institutions

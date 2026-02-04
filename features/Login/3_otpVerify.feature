@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - OTP Verify API Testing
+Feature: Login- OTP Verify
     As a merchant
     I want to verify OTP from Sasai Payment Gateway API
     So that I can complete user authentication for secure transactions

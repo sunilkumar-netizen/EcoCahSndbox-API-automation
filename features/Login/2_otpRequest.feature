@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - OTP Request API Testing
+Feature: Login- OTP Request
     As a merchant
     I want to request OTP from Sasai Payment Gateway API
     So that I can verify user identity for secure transactions

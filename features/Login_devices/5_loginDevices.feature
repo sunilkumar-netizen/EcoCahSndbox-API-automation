@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - Login Devices API Testing
+Feature: Login Devices
     As a user
     I want to retrieve my login devices from Sasai Payment Gateway API
     So that I can view all devices where I'm logged in

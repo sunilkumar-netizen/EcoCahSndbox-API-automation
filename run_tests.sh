@@ -105,9 +105,11 @@ pip install -q -r requirements.txt
 echo -e "${BLUE}Clearing old test results...${NC}"
 rm -rf reports/allure-results/*
 rm -rf reports/allure-report
+rm -rf reports/html-report
 
 # Create necessary directories
 mkdir -p reports/allure-results
+mkdir -p reports/html-report
 mkdir -p reports/junit
 mkdir -p logs
 
@@ -123,6 +125,9 @@ fi
 if [ "$ALLURE" = true ]; then
     BEHAVE_CMD="$BEHAVE_CMD -f allure_behave.formatter:AllureFormatter -o reports/allure-results"
 fi
+
+# Add HTML formatter (always enabled for modern reports)
+BEHAVE_CMD="$BEHAVE_CMD -f behave_html_formatter:HTMLFormatter -o reports/html-report/report.html"
 
 # Add JUnit report
 BEHAVE_CMD="$BEHAVE_CMD --junit --junit-directory reports/junit"
@@ -170,6 +175,11 @@ if [ "$ALLURE" = true ]; then
         echo -e "  or download from: https://github.com/allure-framework/allure2/releases"
     fi
 fi
+
+# Display HTML report location
+echo ""
+echo -e "${GREEN}✅ Modern HTML report generated: reports/html-report/report.html${NC}"
+echo -e "${YELLOW}To view HTML report, run: open reports/html-report/report.html${NC}"
 
 # Print log file location
 LOG_FILE=$(ls -t logs/*.log 2>/dev/null | head -1)

@@ -12,6 +12,7 @@ PyYAML==6.0.1
 
 # Reporting
 allure-behave==2.13.2
+behave-html-formatter==0.9.10
 
 # Data Generation
 Faker==20.1.0

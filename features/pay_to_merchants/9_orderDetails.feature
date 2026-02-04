@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - Order Details API Testing (Merchant Payment)
+Feature: Pay to Merchant- Order Details
     As a user
     I want to retrieve order details from Sasai Payment Gateway API
     So that I can view payment details that were completed in the merchant flow

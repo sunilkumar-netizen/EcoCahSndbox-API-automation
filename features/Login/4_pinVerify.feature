@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - PIN Verify API Testing
+Feature: Login- PIN Verify
     As a merchant
     I want to verify PIN from Sasai Payment Gateway API
     So that I can authenticate users securely for transactions

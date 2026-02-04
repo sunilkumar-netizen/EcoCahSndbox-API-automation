@@ -1,4 +1,4 @@
-Feature: Sasai Payment Gateway - Payment Options API Testing (Merchant Payment)
+Feature: Pay to Merchant- Payment Options
     As a user
     I want to verify payment options from Sasai Payment Gateway API
     So that I can see available payment methods before making a merchant payment
