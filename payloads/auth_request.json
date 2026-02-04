@@ -1,8 +1,0 @@
-{
-  "username": "{{username}}",
-  "password": "{{password}}",
-  "grant_type": "password",
-  "client_id": "ecocash_mobile_app",
-  "client_secret": "{{client_secret}}",
-  "scope": "read write"
-}
