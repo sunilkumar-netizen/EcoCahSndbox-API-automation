@@ -21,44 +21,52 @@ def step_have_utility_payment_body(context):
     """
     config = context.base_test.config
     
+    # Use instrument token from payment options if available, otherwise use config
+    instrument_token = getattr(context, 'instrument_token', None) or config.get('utility_payment.instrument_token', 'b92b7a27-99cb-4c72-9731-3df21d791334')
+    
+    if hasattr(context, 'instrument_token'):
+        logger.info(f"🔑 Using dynamic instrument token from Payment Options API: {instrument_token}")
+    else:
+        logger.info(f"🔑 Using instrument token from config: {instrument_token}")
+    
     context.utility_payment_body = {
-        "feeAmount": 0.0,  # Use float to ensure it's included
-        "currency": "USD",
+        "feeAmount": config.get('utility_payment.fee_amount', 0),
+        "currency": config.get('utility_payment.currency', 'USD'),
         "billerDetails": {
             "operatorId": config.get('utility_payment.operator_id', 'SZWOM00001'),
             "categoryId": config.get('utility_payment.category_id', 'SZWC10002'),
-            "amount": 7.0,  # Use float
-            "currency": "USD",
+            "amount": config.get('utility_payment.payer_amount', 7),
+            "currency": config.get('utility_payment.currency', 'USD'),
             "integratorTxnId": config.get('utility_payment.integrator_txn_id', 'c26af4c4-a62b-47f2-84e3-0167e4ece571'),
             "Q1": config.get('utility_payment.q1_value', '001535')
         },
-        "payerAmount": 7.0,  # Use float
+        "payerAmount": config.get('utility_payment.payer_amount', 7),
         "payerDetails": {
-            "instrumentToken": config.get('utility_payment.instrument_token', 'b92b7a27-99cb-4c72-9731-3df21d791334'),
-            "paymentMethod": "wallet",
-            "provider": "ecocash",
+            "instrumentToken": instrument_token,  # Use dynamic token here
+            "paymentMethod": config.get('utility_payment.payment_method', 'wallet'),
+            "provider": config.get('utility_payment.provider', 'ecocash'),
             "pin": config.get('utility_payment.encrypted_pin'),
-            "publicKeyAlias": "payment-links"
+            "publicKeyAlias": config.get('utility_payment.public_key_alias', 'payment-links')
         },
-        "subType": "merchant-pay",
-        "channel": "sasai-super-app",
+        "subType": config.get('utility_payment.subtype', 'merchant-pay'),
+        "channel": config.get('utility_payment.channel', 'sasai-super-app'),
         "deviceInfo": {
-            "ip": "192.0.0.2",
-            "model": "Samsung",
+            "ip": config.get('utility_payment.device_ip', '192.0.0.2'),
+            "model": config.get('utility_payment.device_model', 'Samsung'),
             "network": "unidentified",
             "latitude": "unidentified",
             "longitude": "unidentified",
-            "os": "Android",
-            "osVersion": "13",
-            "appVersion": "1.4.1",
-            "package": "com.sasai.sasaipay",
-            "simNumber": "SIM_771222221",
-            "deviceId": "deviceID_771222221"
+            "os": config.get('utility_payment.device_os', 'Android'),
+            "osVersion": config.get('utility_payment.device_os_version', '13'),
+            "appVersion": config.get('utility_payment.app_version', '1.4.1'),
+            "package": config.get('utility_payment.app_package', 'com.sasai.sasaipay'),
+            "simNumber": config.get('utility_payment.sim_number', 'SIM_777222015'),
+            "deviceId": config.get('utility_payment.device_id', 'deviceID_777222015')
         },
         "notes": {}
     }
     
-    logger.info("Utility payment request body prepared")
+    logger.info(f"Utility payment request body prepared: {json.dumps(context.utility_payment_body, indent=2)}")
 
 
 @given('I have fee amount {fee_amount:d}')
@@ -311,6 +319,10 @@ def step_send_utility_payment_request(context, endpoint):
     # Get request body
     body = context.utility_payment_body if hasattr(context, 'utility_payment_body') else {}
     
+    # Log the request body being sent
+    logger.info(f"📤 Sending utility payment request to {endpoint}")
+    logger.info(f"📦 Request Body: {json.dumps(body, indent=2)}")
+    
     # Handle malformed JSON case
     if hasattr(context, 'is_malformed_json') and context.is_malformed_json:
         # Send raw malformed string
@@ -323,7 +335,7 @@ def step_send_utility_payment_request(context, endpoint):
         # Send normal JSON request
         context.response = api_client.post(
             endpoint,
-            json=body,
+            json_data=body,
             headers=headers
         )
     

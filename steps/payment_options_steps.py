@@ -172,6 +172,43 @@ def step_verify_payment_options(context):
     
     assert has_payment_options, f"Response should contain payment options, got: {response_data}"
     logger.info("✅ Response contains payment options")
+    
+    # Log the full response structure for debugging
+    import json
+    logger.info(f"📋 Payment Options Full Response:\n{json.dumps(response_data, indent=2)}")
+    
+    # Extract and store instrument token for use in utility payment
+    instrument_token = None
+    
+    if isinstance(response_data, dict):
+        # Check for the actual structure: items[0].instruments[0].instrumentToken
+        if 'items' in response_data and isinstance(response_data['items'], list) and len(response_data['items']) > 0:
+            item = response_data['items'][0]
+            if 'instruments' in item and isinstance(item['instruments'], list) and len(item['instruments']) > 0:
+                instrument = item['instruments'][0]
+                if 'instrumentToken' in instrument:
+                    instrument_token = instrument['instrumentToken']
+        
+        # Fallback: Try other possible paths
+        if not instrument_token:
+            if 'instrumentToken' in response_data:
+                instrument_token = response_data['instrumentToken']
+            elif 'data' in response_data and isinstance(response_data['data'], dict):
+                if 'instrumentToken' in response_data['data']:
+                    instrument_token = response_data['data']['instrumentToken']
+            elif 'paymentMethods' in response_data and isinstance(response_data['paymentMethods'], list):
+                for method in response_data['paymentMethods']:
+                    if isinstance(method, dict) and 'instrumentToken' in method:
+                        instrument_token = method['instrumentToken']
+                        break
+    
+    # Store the instrument token if found
+    if instrument_token:
+        context.instrument_token = instrument_token
+        logger.info(f"✅ Extracted instrument token from payment options: {instrument_token}")
+    else:
+        logger.warning("⚠️ No instrument token found in payment options response")
+        logger.warning(f"📍 Response structure: {list(response_data.keys()) if isinstance(response_data, dict) else 'list'}")
 
 
 @then('response should contain payment methods')

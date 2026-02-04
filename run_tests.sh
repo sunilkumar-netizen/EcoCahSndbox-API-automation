@@ -101,6 +101,11 @@ echo -e "${BLUE}Checking dependencies...${NC}"
 pip install -q --upgrade pip
 pip install -q -r requirements.txt
 
+# Clear old test results to ensure fresh report
+echo -e "${BLUE}Clearing old test results...${NC}"
+rm -rf reports/allure-results/*
+rm -rf reports/allure-report
+
 # Create necessary directories
 mkdir -p reports/allure-results
 mkdir -p reports/junit

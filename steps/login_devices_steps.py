@@ -61,7 +61,8 @@ def step_have_user_token_from_pin_verify(context):
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {access_token}',
-        'model': config.get('pin_verify.default_device_model')
+        'model': config.get('pin_verify.default_device_model'),
+        'deviceid': config.get('pin_verify.default_device_id')  # Required device ID
     }
     
     # Build URL with query parameters

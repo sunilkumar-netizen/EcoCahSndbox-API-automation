@@ -1,0 +1,182 @@
+Feature: Sasai Payment Gateway - App Token API Testing # features/Login/1_appToken.feature:1
+  As a merchant
+  I want to get an app token from Sasai Payment Gateway API
+  So that I can authenticate and access payment services
+  Background:   # features/Login/1_appToken.feature:6
+
+  @smoke @appToken @sasai
+  Scenario: Get app token with valid credentials     # features/Login/1_appToken.feature:10
+    Given API is available                           # steps/common_steps.py:9
+    Given I have valid Sasai login credentials       # steps/appToken_steps.py:21
+    When I send POST request to "/bff/v1/auth/token" # steps/common_steps.py:28
+    Then response status code should be 200          # steps/common_steps.py:74
+    And response body should contain "accessToken"   # steps/common_steps.py:90
+    And I store the "accessToken" from response      # steps/common_steps.py:134
+
+Feature: Sasai Payment Gateway - OTP Request API Testing # features/Login/2_otpRequest.feature:1
+  As a merchant
+  I want to request OTP from Sasai Payment Gateway API
+  So that I can verify user identity for secure transactions
+  Background:   # features/Login/2_otpRequest.feature:6
+
+  @smoke @otp @sasai
+  Scenario: Request OTP with valid parameters                            # features/Login/2_otpRequest.feature:11
+    Given API is available                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                          # steps/otp_steps.py:9
+    Given I have valid OTP request details                               # steps/otp_steps.py:38
+    When I send authenticated POST request to "/bff/v2/auth/otp/request" # steps/otp_steps.py:105
+    Then response status code should be 200                              # steps/common_steps.py:74
+    And response time should be less than 5000 ms                        # steps/common_steps.py:127
+
+Feature: Sasai Payment Gateway - OTP Verify API Testing # features/Login/3_otpVerify.feature:1
+  As a merchant
+  I want to verify OTP from Sasai Payment Gateway API
+  So that I can complete user authentication for secure transactions
+  Background:   # features/Login/3_otpVerify.feature:6
+
+  @smoke @otp_verify @sasai
+  Scenario: Verify OTP with valid parameters                          # features/Login/3_otpVerify.feature:11
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    Given I have valid OTP verification details                       # steps/otp_verify_steps.py:10
+    When I send OTP verification request to "/bff/v1/auth/otp/verify" # steps/otp_verify_steps.py:212
+    Then response status code should be 200                           # steps/common_steps.py:74
+    And response time should be less than 5000 ms                     # steps/common_steps.py:127
+    And response should contain OTP verification status               # steps/otp_verify_steps.py:234
+
+Feature: Sasai Payment Gateway - PIN Verify API Testing # features/Login/4_pinVerify.feature:1
+  As a merchant
+  I want to verify PIN from Sasai Payment Gateway API
+  So that I can authenticate users securely for transactions
+  Background:   # features/Login/4_pinVerify.feature:9
+
+  @smoke @pin_verify @sasai
+  Scenario: Verify PIN with valid parameters                          # features/Login/4_pinVerify.feature:14
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    Given I have valid PIN verification details                       # steps/pin_verify_steps.py:10
+    When I send PIN verification request to "/bff/v4/auth/pin/verify" # steps/pin_verify_steps.py:222
+    Then response status code should be 200                           # steps/common_steps.py:74
+    And response time should be less than 5000 ms                     # steps/common_steps.py:127
+    And response should contain PIN verification status               # steps/pin_verify_steps.py:290
+
+Feature: Sasai Payment Gateway - Login Devices API Testing # features/Login_devices/5_loginDevices.feature:1
+  As a user
+  I want to retrieve my login devices from Sasai Payment Gateway API
+  So that I can view all devices where I'm logged in
+  Background:   # features/Login_devices/5_loginDevices.feature:9
+
+  @smoke @login_devices @sasai
+  Scenario: Get login devices with valid user token                   # features/Login_devices/5_loginDevices.feature:15
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                 # steps/login_devices_steps.py:9
+    Given I have valid user authentication                            # steps/login_devices_steps.py:92
+    When I send login devices request to "/bff/v1/user/login-devices" # steps/login_devices_steps.py:165
+    Then response status code should be 200                           # steps/common_steps.py:74
+    And response time should be less than 5000 ms                     # steps/common_steps.py:127
+    And response should contain login devices list                    # steps/login_devices_steps.py:205
+
+Feature: Sasai Payment Gateway - Merchant Lookup API Testing (Pay to Merchant) # features/pay_to_merchants/6_merchantLookup.feature:1
+  As a user
+  I want to lookup merchant details from Sasai Payment Gateway API
+  So that I can verify merchant information before making a payment
+  Background:   # features/pay_to_merchants/6_merchantLookup.feature:10
+
+  @smoke @merchant_lookup @pay_to_merchant @sasai
+  Scenario: Lookup merchant with valid parameters                                                         # features/pay_to_merchants/6_merchantLookup.feature:16
+    Given API is available                                                                                # steps/common_steps.py:9
+    And I am authenticated with valid app token                                                           # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                                     # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                                                # steps/login_devices_steps.py:92
+    And I have merchant lookup parameters                                                                 # steps/merchant_lookup_steps.py:17
+    When I send merchant lookup request to "/catalog/v1/categories/SZWC10002/operators/SZWOM00001/lookup" # steps/merchant_lookup_steps.py:238
+    Then response status code should be 200                                                               # steps/common_steps.py:74
+    And response time should be less than 5000 ms                                                         # steps/common_steps.py:127
+    And response should contain merchant details                                                          # steps/merchant_lookup_steps.py:339
+
+Feature: Sasai Payment Gateway - Payment Options API Testing (Merchant Payment) # features/pay_to_merchants/7_paymentOptions.feature:1
+  As a user
+  I want to verify payment options from Sasai Payment Gateway API
+  So that I can see available payment methods before making a merchant payment
+  Background:   # features/pay_to_merchants/7_paymentOptions.feature:10
+
+  @smoke @payment_options @merchant_payment @sasai
+  Scenario: Verify payment options with valid parameters             # features/pay_to_merchants/7_paymentOptions.feature:16
+    Given API is available                                           # steps/common_steps.py:9
+    And I am authenticated with valid app token                      # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                # steps/login_devices_steps.py:9
+    Given I have valid user authentication                           # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                      # steps/payment_options_steps.py:16
+    When I send payment options request to "/bff/v1/payment/options" # steps/payment_options_steps.py:70
+    Then response status code should be 200                          # steps/common_steps.py:74
+    And response time should be less than 5000 ms                    # steps/common_steps.py:127
+    And response should contain payment options                      # steps/payment_options_steps.py:160
+
+Feature: Sasai Payment Gateway - Utility Payment API Testing (Merchant Payment) # features/pay_to_merchants/8_utilityPayment.feature:1
+  As a user
+  I want to make utility payments through Sasai Payment Gateway API
+  So that I can complete merchant payments for utility services
+  Background:   # features/pay_to_merchants/8_utilityPayment.feature:10
+
+  @smoke @utility_payment @merchant_payment @sasai
+  Scenario: Create utility payment with valid parameters                   # features/pay_to_merchants/8_utilityPayment.feature:22
+    Given API is available                                                 # steps/common_steps.py:9
+    And I am authenticated with valid app token                            # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                      # steps/login_devices_steps.py:9
+    And I have valid user authentication                                   # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                            # steps/payment_options_steps.py:16
+    And I have request ID "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"           # steps/merchant_lookup_steps.py:94
+    When I send payment options request to "/bff/v1/payment/options"       # steps/payment_options_steps.py:70
+    Then response status code should be 200                                # steps/common_steps.py:74
+    And response should contain payment options                            # steps/payment_options_steps.py:160
+    Given I have valid user authentication                                 # steps/login_devices_steps.py:92
+    And I have utility payment request body                                # steps/utility_payment_steps.py:17
+    When I send utility payment request to "/bff/v2/order/utility/payment" # steps/utility_payment_steps.py:304
+    Then response status code should be 200                                # steps/common_steps.py:74
+    And response time should be less than 10000 ms                         # steps/common_steps.py:127
+    And response should contain payment confirmation                       # steps/utility_payment_steps.py:386
+
+Feature: Sasai Payment Gateway - Order Details API Testing (Merchant Payment) # features/pay_to_merchants/9_orderDetails.feature:1
+  As a user
+  I want to retrieve order details from Sasai Payment Gateway API
+  So that I can view payment details that were completed in the merchant flow
+  Background:   # features/pay_to_merchants/9_orderDetails.feature:10
+
+  @smoke @order_details @merchant_payment @sasai
+  Scenario: Get order details with valid order reference                            # features/pay_to_merchants/9_orderDetails.feature:16
+    Given API is available                                                          # steps/common_steps.py:9
+    And I am authenticated with valid app token                                     # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                               # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                          # steps/login_devices_steps.py:92
+    And I have order reference "176888-6726-665218"                                 # steps/order_details_steps.py:16
+    When I send order details request to "/bff/v2/order/details/176888-6726-665218" # steps/order_details_steps.py:54
+    Then response status code should be 200                                         # steps/common_steps.py:74
+      Assertion Failed: Expected status code 200, but got 401. Response: {"errorUserMsg":"Your session has timed out. Please log out and log in again to continue.","errorCode":"error.auth.token.expired","step":"","referenceId":"6492f6a1cf5d6bf6","traceId":"6492f6a1cf5d6bf6
+
+    And response time should be less than 5000 ms                                   # None
+    And response should contain order details                                       # None
+
+Feature: Sasai Payment Gateway - School/Church/Merchant Search API Testing (Pay to School Flow) # features/pay_to_school/10_schoolSearch.feature:1
+  As a user
+  I want to search for schools, churches, and merchants
+  So that I can make payments to these institutions
+  Background:   # features/pay_to_school/10_schoolSearch.feature:11
+
+  @smoke @school_search @pay_to_school @sasai
+  Scenario: Search for schools with valid parameters                                     # features/pay_to_school/10_schoolSearch.feature:17
+    Given API is available                                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                                          # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                    # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                               # steps/login_devices_steps.py:92
+    And I have search type "SCHOOL"                                                      # steps/school_search_steps.py:21
+    And I have page number 0                                                             # steps/school_search_steps.py:28
+    And I have page size 10                                                              # steps/school_search_steps.py:35
+    And I have name query "school"                                                       # steps/school_search_steps.py:42
+    When I send school search request to "/bff/v1/catalog/search-school-church-merchant" # steps/school_search_steps.py:73
+    Then response status code should be 200                                              # steps/common_steps.py:74
+    And response should contain search results                                           # steps/school_search_steps.py:152
+    And response should have pagination info                                             # steps/school_search_steps.py:164
+      Assertion Failed: Response should contain pagination info. Available fields: ['ecocashTransactionId', 'responseMessage', 'sasaiReference', 'status', 'pagination', 'merchants']
+
+

@@ -11,6 +11,12 @@ Feature: Sasai Payment Gateway - Utility Payment API Testing (Merchant Payment)
         Given API is available
         And I am authenticated with valid app token
         And I have valid user token from PIN verification
+        And I have valid user authentication
+        And I have service type "sasai-app-payment"
+        And I have request ID "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"
+        When I send payment options request to "/bff/v1/payment/options"
+        Then response status code should be 200
+        And response should contain payment options
 
     @smoke @utility_payment @merchant_payment @sasai
     Scenario: Create utility payment with valid parameters

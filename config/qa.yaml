@@ -24,7 +24,7 @@ otp_verify:
 
 # OTP Request Configuration
 otp:
-  sender_id: "771222221"
+  sender_id: "771222221" # 771222221 789124558 789124669 777222015 781707016
   country_code: "+263"
   default_purpose: "0" # 0 for authentication
   default_mode: "0" # 0 for SMS, 1 for Email
@@ -40,6 +40,8 @@ pin_verify:
   default_tenant_id: "sasai"
   default_azp: "sasai-pay-client"
   default_device_model: "Postman API Device"
+  default_device_id: "57E6D504-CA3A-4315-8CAA-3243BA654BC0" # Required device ID for PIN verification
+  invalid_device_id: "invalid-device-id"
   malformed_test_string: "test"
   malformed_pin: 12345 # Should be string for testing
   malformed_user_ref: 99999 # Should be string UUID for testing
@@ -119,25 +121,27 @@ utility_payment:
   category_id: "SZWC10002"
   operator_id: "SZWOM00001"
   q1_value: "001535"
-  integrator_txn_id: "c26af4c4-a62b-47f2-84e3-0167e4ece571"
-  instrument_token: "b92b7a27-99cb-4c72-9731-3df21d791334"
+  integrator_txn_id: "fc25e475-3bdd-4319-b1c0-43842ad5556c"
+  instrument_token: "d3c19bd0-5b8f-4a3c-b5ab-036c78de72b2"
   encrypted_pin: "Z9jXnPVARjr+J5ZHBlMIw93wMCzEmuXv6jpbl7dXQ7PcHcEiiywjyrO3DqSLGT/g1XyKTj7AzYOdgRfSoGbAOBeBefi5dhK+KIvEu+2e+pxHbj4vcKdJEZEwuv0XlnT7XWCioCAkZdqn+edZZIyAYxa4yux7fnt+Ek2HRNT1ic0Rh46buOoXngjxlu3VIFRh1KvVB7DcnjdtOH9u9qMEDgIFLNKiB3YOHwzYNlu+YbcrToH01xGJEUZ5dWy+Hc9pTOB8dQ+lvGsHZ+u4dzkCf09avVWlP9ljnEgefNPDVtoe51Z1abFVm2Bptdw8vW2DsuqP5HpH8rROu6vr7W9mjg=="
   public_key_alias: "payment-links"
   payment_method: "wallet"
   provider: "ecocash"
   fee_amount: 0
-  payer_amount: 7
+  payer_amount: 2
   currency: "USD"
   subtype: "merchant-pay"
   channel: "sasai-super-app"
   endpoint: "/bff/v2/order/utility/payment"
-  # Device information
+  # Device information (from working Postman request)
   device_ip: "192.0.0.2"
   device_model: "Samsung"
   device_os: "Android"
   device_os_version: "13"
   app_version: "1.4.1"
   app_package: "com.sasai.sasaipay"
+  sim_number: "SIM_777222015"
+  device_id: "deviceID_777222015"
 
 # Order Details Configuration (Merchant Payment Flow - Step 9)
 order_details:
@@ -149,6 +153,40 @@ order_details:
   endpoint: "/bff/v2/order/details"
   sim_number: "SIM_771222221"
   device_id: "deviceID_771222221"
+
+# School/Church/Merchant Search Configuration (Pay to School Flow - Step 10)
+school_search:
+  endpoint: "/bff/v1/catalog/search-school-church-merchant"
+  default_type: "SCHOOL"
+  valid_types:
+    - "SCHOOL"
+    - "CHURCH"
+    - "MERCHANT"
+  default_page: 0
+  default_page_size: 10
+  max_page_size: 100
+  default_name_query: "school"
+
+  # Test queries for different types
+  school_query: "school"
+  church_query: "church"
+  merchant_query: "merchant"
+
+  # Invalid test data
+  invalid_type: "INVALID_TYPE"
+  invalid_page: -1
+  invalid_page_size: 0
+  negative_page_size: -10
+  excessive_page_size: 1000
+  empty_name_query: ""
+  special_chars_query: "@#$%^&*()"
+  sql_injection_query: "'; DROP TABLE schools; --"
+
+  # Edge cases
+  min_query_length: "a"
+  max_query_length: "verylongschoolnamethatexceedsnormallimits"
+  numeric_query: "123"
+  unicode_query: "学校"
 
 database:
   enabled: false

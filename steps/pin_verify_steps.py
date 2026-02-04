@@ -61,7 +61,8 @@ def step_have_valid_pin_verification(context):
     
     # Set default custom headers
     context.custom_headers = {
-        'model': config.get('pin_verify.default_device_model')
+        'model': config.get('pin_verify.default_device_model'),
+        'deviceid': config.get('pin_verify.default_device_id')  # Required device ID
     }
     
     context.base_test.logger.info("Valid PIN verification details prepared")
@@ -177,6 +178,33 @@ def step_have_invalid_device_model(context, model):
         context.custom_headers = {}
     context.custom_headers['model'] = model
     context.base_test.logger.info(f"Invalid device model set: {model}")
+
+
+@given('I have device ID "{device_id}"')
+def step_have_device_id(context, device_id):
+    """Set device ID header."""
+    if not hasattr(context, 'custom_headers'):
+        context.custom_headers = {}
+    context.custom_headers['deviceid'] = device_id
+    context.base_test.logger.info(f"Device ID set: {device_id}")
+
+
+@given('I have invalid device ID')
+def step_have_invalid_device_id(context):
+    """Set invalid device ID header."""
+    if not hasattr(context, 'custom_headers'):
+        context.custom_headers = {}
+    config = context.base_test.config
+    context.custom_headers['deviceid'] = config.get('pin_verify.invalid_device_id')
+    context.base_test.logger.info("Invalid device ID set")
+
+
+@given('I have PIN verification without device ID')
+def step_have_pin_verification_without_device_id(context):
+    """Remove device ID from headers to test validation."""
+    if hasattr(context, 'custom_headers') and 'deviceid' in context.custom_headers:
+        del context.custom_headers['deviceid']
+    context.base_test.logger.info("Device ID removed from headers")
 
 
 @given('I have malformed PIN verification data')
