@@ -46,7 +46,7 @@ def step_no_name_query(context):
 @when('I send church search request to "{endpoint}"')
 def step_send_church_search_request(context, endpoint):
     """Send GET request to church search endpoint with query parameters"""
-    url = f"{context.config.base_url}{endpoint}"
+    url = f"{context.config_loader.get('api.base_url')}{endpoint}"
     
     # Build query parameters
     params = {}

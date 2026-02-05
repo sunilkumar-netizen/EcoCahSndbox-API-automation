@@ -306,7 +306,7 @@ def step_extract_instrument_token_from_response(context):
 @when('I send school payment request to "{endpoint}"')
 def step_send_school_payment_request(context, endpoint):
     """Send POST request to school payment endpoint"""
-    url = f"{context.config.base_url}{endpoint}"
+    url = f"{context.config_loader.get('api.base_url')}{endpoint}"
     
     # Build headers
     headers = {
