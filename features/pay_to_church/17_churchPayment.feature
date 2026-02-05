@@ -26,6 +26,7 @@ Feature: Church Payment
         When I send church payment request to "/bff/v2/order/utility/payment"
         Then response status code should be 200
         And response should contain payment confirmation
+        And response should have payment status
         And response should have transaction ID
 
     @church_payment @positive @pay_to_church @sasai

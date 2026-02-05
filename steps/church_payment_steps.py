@@ -388,7 +388,7 @@ def step_send_church_payment_with_stored_token(context, endpoint):
 
 @then('response should contain payment confirmation')
 def step_verify_payment_confirmation(context):
-    """Verify response contains payment confirmation"""
+    """Verify response contains payment confirmation and check payment status"""
     response_json = context.response.json()
     
     # Check for common payment confirmation fields
@@ -398,7 +398,136 @@ def step_verify_payment_confirmation(context):
         has_confirmation = True
     
     assert has_confirmation, "Response should contain payment confirmation"
+    
+    # Extract and verify payment status
+    payment_status = None
+    status_field = None
+    
+    # Check various possible status field names
+    for field in ['status', 'paymentStatus', 'transactionStatus', 'orderStatus']:
+        if field in response_json:
+            payment_status = response_json[field]
+            status_field = field
+            break
+    
+    if payment_status:
+        # Store payment status in context for reporting
+        context.payment_status = payment_status
+        
+        # Determine if payment was successful
+        success_statuses = ['success', 'completed', 'approved', 'confirmed', 'SUCCESS', 'COMPLETED', 'APPROVED', 'CONFIRMED']
+        failure_statuses = ['failure', 'failed', 'declined', 'rejected', 'error', 'FAILURE', 'FAILED', 'DECLINED', 'REJECTED', 'ERROR']
+        pending_statuses = ['pending', 'processing', 'initiated', 'PENDING', 'PROCESSING', 'INITIATED']
+        
+        # Log status with appropriate emoji
+        if payment_status in success_statuses:
+            context.base_test.logger.info(f"✅ Payment Status: {payment_status.upper()} - Payment Successful")
+            context.payment_result = "SUCCESS"
+        elif payment_status in failure_statuses:
+            context.base_test.logger.warning(f"❌ Payment Status: {payment_status.upper()} - Payment Failed")
+            context.payment_result = "FAILURE"
+        elif payment_status in pending_statuses:
+            context.base_test.logger.info(f"⏳ Payment Status: {payment_status.upper()} - Payment Pending")
+            context.payment_result = "PENDING"
+        else:
+            context.base_test.logger.info(f"ℹ️ Payment Status: {payment_status.upper()} - Status Unknown")
+            context.payment_result = "UNKNOWN"
+        
+        # Extract transaction ID if available for reporting
+        transaction_id = None
+        for field in ['transactionId', 'transaction_id', 'txnId', 'orderId', 'order_id', 'id']:
+            if field in response_json:
+                transaction_id = response_json[field]
+                context.transaction_id = transaction_id
+                context.base_test.logger.info(f"📝 Transaction ID: {transaction_id}")
+                break
+        
+        # Log complete payment confirmation details
+        context.base_test.logger.info(f"💳 Payment Confirmation - Status: {payment_status} | Transaction: {transaction_id or 'N/A'}")
+    else:
+        context.base_test.logger.warning("⚠️ No explicit payment status field found in response")
+        context.payment_result = "NO_STATUS"
+    
     context.base_test.logger.info("✅ Response contains payment confirmation")
+
+
+@then('payment should be successful')
+def step_verify_payment_success(context):
+    """Verify payment was successful"""
+    response_json = context.response.json()
+    
+    # Check for payment status
+    payment_status = None
+    for field in ['status', 'paymentStatus', 'transactionStatus', 'orderStatus']:
+        if field in response_json:
+            payment_status = response_json[field]
+            break
+    
+    assert payment_status, "Payment status not found in response"
+    
+    # Verify status indicates success
+    success_statuses = ['success', 'completed', 'approved', 'confirmed', 'SUCCESS', 'COMPLETED', 'APPROVED', 'CONFIRMED']
+    
+    assert payment_status in success_statuses, \
+        f"Expected payment to be successful, but status is: {payment_status}"
+    
+    context.base_test.logger.info(f"✅ Payment was successful with status: {payment_status}")
+
+
+@then('payment should be {expected_status}')
+def step_verify_payment_status(context, expected_status):
+    """Verify payment has expected status (success, failure, pending, etc.)"""
+    response_json = context.response.json()
+    
+    # Check for payment status
+    payment_status = None
+    for field in ['status', 'paymentStatus', 'transactionStatus', 'orderStatus']:
+        if field in response_json:
+            payment_status = response_json[field]
+            break
+    
+    assert payment_status, "Payment status not found in response"
+    
+    # Normalize statuses for comparison
+    actual_status_normalized = payment_status.lower()
+    expected_status_normalized = expected_status.lower()
+    
+    assert actual_status_normalized == expected_status_normalized, \
+        f"Expected payment status '{expected_status}', but got '{payment_status}'"
+    
+    # Log with appropriate emoji
+    emoji_map = {
+        'success': '✅',
+        'completed': '✅',
+        'approved': '✅',
+        'failure': '❌',
+        'failed': '❌',
+        'declined': '❌',
+        'pending': '⏳',
+        'processing': '⏳'
+    }
+    
+    emoji = emoji_map.get(actual_status_normalized, 'ℹ️')
+    context.base_test.logger.info(f"{emoji} Payment status verified: {payment_status} (expected: {expected_status})")
+
+
+@then('response should have payment status')
+def step_verify_has_payment_status(context):
+    """Verify response contains payment status field"""
+    response_json = context.response.json()
+    
+    has_status = False
+    status_value = None
+    
+    for field in ['status', 'paymentStatus', 'transactionStatus', 'orderStatus']:
+        if field in response_json:
+            has_status = True
+            status_value = response_json[field]
+            context.base_test.logger.info(f"✓ Found status field: {field} = {status_value}")
+            break
+    
+    assert has_status, "Response should contain payment status field"
+    context.base_test.logger.info("✅ Response has payment status")
 
 
 @then('response should have transaction ID')
