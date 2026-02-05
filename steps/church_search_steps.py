@@ -46,7 +46,7 @@ def step_no_name_query(context):
 @when('I send church search request to "{endpoint}"')
 def step_send_church_search_request(context, endpoint):
     """Send GET request to church search endpoint with query parameters"""
-    url = f"{context.config['base_url']}{endpoint}"
+    url = f"{context.config.base_url}{endpoint}"
     
     # Build query parameters
     params = {}
@@ -145,14 +145,20 @@ def step_response_has_pagination_info(context):
     """Verify response contains pagination information"""
     response_data = context.response.json()
     
-    # Check for pagination fields
-    pagination_fields = ['page', 'pageSize', 'totalPages', 'totalElements', 'size', 'number']
-    has_pagination = any(field in response_data for field in pagination_fields)
-    
-    assert has_pagination, \
-        f"Response should contain pagination info. Available fields: {list(response_data.keys())}"
-    
-    context.base_test.logger.info("✓ Response has pagination info")
+    # Check for pagination object or individual pagination fields
+    if 'pagination' in response_data:
+        pagination = response_data['pagination']
+        assert isinstance(pagination, dict), "Pagination should be a dictionary"
+        context.base_test.logger.info(f"✓ Response has pagination object: {pagination}")
+    else:
+        # Check for individual pagination fields
+        pagination_fields = ['page', 'pageSize', 'totalPages', 'totalElements', 'size', 'number']
+        has_pagination = any(field in response_data for field in pagination_fields)
+        
+        assert has_pagination, \
+            f"Response should contain pagination info. Available fields: {list(response_data.keys())}"
+        
+        context.base_test.logger.info("✓ Response has pagination info")
 
 
 @then('response should have content field')

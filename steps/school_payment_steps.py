@@ -19,9 +19,11 @@ import time
 @given('I have instrument token from payment options')
 def step_have_instrument_token(context):
     """Set instrument token from payment options response"""
-    # This should be extracted from payment options API response
-    # Using a placeholder token for now
-    context.instrument_token = context.get('extracted_instrument_token', '9f144ae3-4feb-4299-aa31-f071d29e9381')
+    # Try to get from extracted token, otherwise use default
+    if hasattr(context, 'extracted_instrument_token'):
+        context.instrument_token = context.extracted_instrument_token
+    else:
+        context.instrument_token = '9f144ae3-4feb-4299-aa31-f071d29e9381'
     context.base_test.logger.info(f"Set instrument token: {context.instrument_token[:20]}...")
 
 
@@ -304,7 +306,7 @@ def step_extract_instrument_token_from_response(context):
 @when('I send school payment request to "{endpoint}"')
 def step_send_school_payment_request(context, endpoint):
     """Send POST request to school payment endpoint"""
-    url = f"{context.config['base_url']}{endpoint}"
+    url = f"{context.config.base_url}{endpoint}"
     
     # Build headers
     headers = {
