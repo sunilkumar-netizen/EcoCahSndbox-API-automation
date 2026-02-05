@@ -143,6 +143,18 @@ utility_payment:
   sim_number: "SIM_777222015"
   device_id: "deviceID_777222015"
 
+# Church Payment Configuration (Pay to Church Flow)
+church_payment:
+  fee_amount: 0
+  currency: "USD"
+  operator_id: "SZWOCH0001"
+  category_id: "SZWC10018"
+  payment_method: "wallet"
+  provider: "ecocash"
+  subtype: "pay-to-church"
+  channel: "sasai-super-app"
+  endpoint: "/bff/v2/order/utility/payment"
+
 # Order Details Configuration (Merchant Payment Flow - Step 9)
 order_details:
   order_reference: "176888-6726-665218"

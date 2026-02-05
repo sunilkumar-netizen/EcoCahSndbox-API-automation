@@ -21,18 +21,35 @@ def step_have_church_payment_details(context):
     # Get instrument token from context or use default
     instrument_token = getattr(context, 'instrument_token', '92c60cfb-4955-49a6-9f5a-0863f3f6fccb')
     
+    # Get config loader from context
+    config = context.config_loader
+    
+    # Get fee amount from church_payment config, fallback to utility_payment, then 0
+    # Ensure it's explicitly set as integer or float, not None
+    fee_amount = config.get('church_payment.fee_amount')
+    if fee_amount is None:
+        fee_amount = config.get('utility_payment.fee_amount', 0)
+    
+    # Ensure fee_amount is a number (int or float)
+    if fee_amount is None:
+        fee_amount = 0
+    
+    # Build payment details - feeAmount should be from config (typically 0)
+    # The real issue was using json= instead of json_data= in api_client.post()
+    payer_amount = 1.0
+    
     context.payment_details = {
-        "feeAmount": 0,
+        "feeAmount": int(fee_amount) if isinstance(fee_amount, float) and fee_amount.is_integer() else fee_amount,
         "currency": "USD",
         "billerDetails": {
             "operatorId": "SZWOCH0001",
             "categoryId": "SZWC10018",
-            "amount": 1.0,
+            "amount": payer_amount,
             "currency": "USD",
             "Q1": "156611",  # Church code
             "Q2": "Offering"  # Transfer purpose
         },
-        "payerAmount": 1.0,
+        "payerAmount": payer_amount,
         "payerDetails": {
             "instrumentToken": instrument_token,
             "paymentMethod": "wallet",
@@ -60,7 +77,8 @@ def step_have_church_payment_details(context):
             "transferPurpose": "Offering"
         }
     }
-    context.base_test.logger.info("⛪ Set default church payment details")
+    
+    context.base_test.logger.info(f"⛪ Set church payment details with feeAmount={payer_amount} (equal to payerAmount)")
 
 
 @given('I have church payment details with purpose "{purpose}"')
@@ -97,6 +115,24 @@ def step_have_church_payment_with_currency(context, currency):
     context.payment_details['currency'] = currency
     context.payment_details['billerDetails']['currency'] = currency
     context.base_test.logger.info(f"💱 Set church payment currency: {currency}")
+
+
+@given('I have church payment details with fee amount {fee_amount:f}')
+def step_have_church_payment_with_fee_amount_float(context, fee_amount):
+    """Set church payment with specific fee amount (float)"""
+    if not hasattr(context, 'payment_details'):
+        step_have_church_payment_details(context)
+    context.payment_details['feeAmount'] = fee_amount
+    context.base_test.logger.info(f"💰 Set church payment fee amount: {fee_amount}")
+
+
+@given('I have church payment details with fee amount {fee_amount:d}')
+def step_have_church_payment_with_fee_amount_int(context, fee_amount):
+    """Set church payment with specific fee amount (integer)"""
+    if not hasattr(context, 'payment_details'):
+        step_have_church_payment_details(context)
+    context.payment_details['feeAmount'] = float(fee_amount)
+    context.base_test.logger.info(f"💰 Set church payment fee amount: {fee_amount}")
 
 
 @given('I have no payment details')
@@ -289,6 +325,8 @@ def step_send_church_payment_request(context, endpoint):
     
     payload = context.payment_details
     
+    # Log the feeAmount specifically to debug
+    context.base_test.logger.info(f"💰 feeAmount in payload: {payload.get('feeAmount')} (type: {type(payload.get('feeAmount'))})")
     context.base_test.logger.info(f"💳 Church Payment Payload: {json.dumps(payload, indent=2)[:500]}...")
     
     # Build headers
@@ -322,7 +360,7 @@ def step_send_church_payment_request(context, endpoint):
     
     context.response = api_client.post(
         endpoint=endpoint,
-        json=payload,
+        json_data=payload,
         headers=headers
     )
     

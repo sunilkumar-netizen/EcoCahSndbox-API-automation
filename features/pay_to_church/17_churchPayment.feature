@@ -17,8 +17,12 @@ Feature: Church Payment
     @smoke @church_payment @pay_to_church @sasai
     Scenario: Make church payment with valid details
         Given I have valid user authentication
-        And I have church payment details
+        And I have service type "sasai-app-payment"
         And I have device information headers
+        When I send payment options request to "/bff/v2/payment/options"
+        Then response status code should be 200
+        And I extract instrument token from response
+        Given I have church payment details
         When I send church payment request to "/bff/v2/order/utility/payment"
         Then response status code should be 200
         And response should contain payment confirmation
