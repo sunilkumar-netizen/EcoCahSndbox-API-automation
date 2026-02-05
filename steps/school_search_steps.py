@@ -161,22 +161,6 @@ def step_verify_search_results(context):
     logger.info("✅ Response contains search results")
 
 
-@then('response should have pagination info')
-def step_verify_pagination_info(context):
-    """Verify response contains pagination information"""
-    response_json = context.response.json()
-    
-    # Check for common pagination fields
-    # Adjust field names based on actual API response
-    pagination_fields = ['page', 'pageSize', 'totalPages', 'totalElements', 'size', 'number']
-    
-    has_pagination = any(field in response_json for field in pagination_fields)
-    
-    assert has_pagination, f"Response should contain pagination info. Available fields: {list(response_json.keys())}"
-    
-    logger.info("✅ Response has pagination info")
-
-
 @then('response should have at most {max_results:d} results')
 def step_verify_max_results(context, max_results):
     """Verify response has at most specified number of results"""
@@ -199,17 +183,6 @@ def step_verify_max_results(context, max_results):
         logger.info(f"✅ Response has {actual_count} results (max: {max_results})")
     else:
         logger.warning("⚠️ Could not find results array in response")
-
-
-@then('response should have search structure')
-def step_verify_search_structure(context):
-    """Verify response has proper search result structure"""
-    response_json = context.response.json()
-    
-    # Verify it's a valid JSON object
-    assert isinstance(response_json, (dict, list)), "Response should be a JSON object or array"
-    
-    logger.info("✅ Response has valid search structure")
 
 
 @then('search response should have required fields')

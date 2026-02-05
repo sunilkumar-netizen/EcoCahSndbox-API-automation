@@ -383,31 +383,6 @@ def step_send_utility_payment_with_stored_token(context, endpoint):
 # Then Steps - Validate responses
 # ============================================================================
 
-@then('response should contain payment confirmation')
-def step_verify_payment_confirmation(context):
-    """
-    Verify response contains payment confirmation
-    """
-    response_data = context.response.json()
-    
-    # Check for payment confirmation indicators
-    has_confirmation = False
-    
-    if isinstance(response_data, dict):
-        # Common confirmation field names
-        confirmation_keys = ['status', 'orderId', 'transactionId', 'txnId', 'paymentId', 
-                           'success', 'message', 'data', 'result']
-        
-        for key in confirmation_keys:
-            if key in response_data:
-                has_confirmation = True
-                logger.info(f"Found payment confirmation in key: {key}")
-                break
-    
-    assert has_confirmation, f"Response should contain payment confirmation, got: {response_data}"
-    logger.info("✅ Response contains payment confirmation")
-
-
 @then('response should contain transaction ID')
 def step_verify_transaction_id(context):
     """
@@ -437,30 +412,3 @@ def step_verify_transaction_id(context):
     assert has_transaction_id, f"Response should contain transaction ID, got: {response_data}"
     logger.info("✅ Response contains transaction ID")
 
-
-@then('response should have payment structure')
-def step_verify_payment_structure(context):
-    """
-    Verify response has proper payment structure
-    """
-    response_data = context.response.json()
-    
-    # Verify response has data
-    assert response_data is not None, "Response should not be None"
-    assert len(response_data) > 0, "Response should not be empty"
-    assert isinstance(response_data, dict), "Response should be a JSON object"
-    
-    logger.info("✅ Response has payment structure")
-
-
-@then('payment response should have required fields')
-def step_verify_payment_required_fields(context):
-    """
-    Verify payment response has required fields
-    """
-    response_data = context.response.json()
-    
-    assert isinstance(response_data, dict), "Payment response should be an object"
-    assert len(response_data) > 0, "Payment response should have fields"
-    
-    logger.info(f"✅ Payment response has required fields: {list(response_data.keys())}")

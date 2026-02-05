@@ -67,6 +67,48 @@ def step_send_get_request(context, endpoint):
     context.base_test.logger.info(f"GET request sent to {endpoint}")
 
 
+@when('I send PUT request to "{endpoint}"')
+def step_send_put_request(context, endpoint):
+    """Send PUT request to the specified endpoint."""
+    api_client = context.base_test.api_client
+    request_data = getattr(context, 'request_data', {})
+    
+    # Check if user_token exists (for user-level endpoints)
+    headers = None
+    if hasattr(context, 'user_token') and context.user_token:
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {context.user_token}'
+        }
+    
+    context.response = api_client.put(
+        endpoint=endpoint,
+        json_data=request_data,
+        headers=headers
+    )
+    context.base_test.logger.info(f"PUT request sent to {endpoint}")
+
+
+@when('I send DELETE request to "{endpoint}"')
+def step_send_delete_request(context, endpoint):
+    """Send DELETE request to the specified endpoint."""
+    api_client = context.base_test.api_client
+    
+    # Check if user_token exists (for user-level endpoints)
+    headers = None
+    if hasattr(context, 'user_token') and context.user_token:
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {context.user_token}'
+        }
+    
+    context.response = api_client.delete(
+        endpoint=endpoint,
+        headers=headers
+    )
+    context.base_test.logger.info(f"DELETE request sent to {endpoint}")
+
+
 # ==============================================================================
 # Response Assertion Steps
 # ==============================================================================
