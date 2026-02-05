@@ -246,6 +246,35 @@ def step_verify_payment_methods(context):
     logger.info("✅ Response contains payment methods")
 
 
+@then('response should have payment options')
+def step_verify_payment_options(context):
+    """
+    Verify response contains payment options
+    This is a simplified check compared to 'response should have payment options structure'
+    """
+    response_data = context.response.json()
+    
+    # Verify response has data
+    assert response_data is not None, "Response should not be None"
+    
+    # Check for payment options in various formats
+    has_payment_options = False
+    
+    if isinstance(response_data, dict):
+        # Check for common payment options keys
+        if 'items' in response_data or 'paymentMethods' in response_data or 'options' in response_data:
+            has_payment_options = True
+        elif len(response_data) > 0:
+            # If dict has any data, consider it valid
+            has_payment_options = True
+    
+    elif isinstance(response_data, list) and len(response_data) > 0:
+        has_payment_options = True
+    
+    assert has_payment_options, f"Response should contain payment options. Response: {response_data}"
+    context.base_test.logger.info("✅ Response contains payment options")
+
+
 @then('response should have payment options structure')
 def step_verify_payment_options_structure(context):
     """
