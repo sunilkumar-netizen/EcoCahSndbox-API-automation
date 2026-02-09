@@ -155,6 +155,34 @@ church_payment:
   channel: "sasai-super-app"
   endpoint: "/bff/v2/order/utility/payment"
 
+# P2P Payment Transfer Configuration (Pay to Person Flow)
+p2p_payment_transfer:
+  fee_amount: 0  # Confirmed working in Postman
+  currency: "ZWG"
+  payer_amount: 3  # Updated from Postman working request
+  payee_amount: 3  # Updated from Postman working request
+  payment_method: "wallet"
+  provider: "ecocash"
+  subtype: "p2p-pay"
+  channel: "sasai-super-app"
+  endpoint: "/bff/v2/order/transfer/payment"
+  public_key_alias: "payment-links"
+  # Device information
+  device_ip: "192.0.0.2"
+  device_model: "Samsung"
+  device_os: "Android"
+  device_os_version: "13"
+  app_version: "1.4.1"
+  app_package: "com.sasai.sasaipay"
+  # Test beneficiary details (from Postman working request)
+  beneficiary_name: "Ropafadzo Nyagwaya"
+  beneficiary_mobile: "+263789124669"
+  beneficiary_instrument_id: "9f894ed8-9116-496b-8599-526cc114b566"
+  beneficiary_instrument_token: "f8d6cb79-620e-45ac-8274-bcee7590f744"  # From Postman
+  beneficiary_customer_id: "f044ff8d-abe6-47aa-8837-ec329e8a0edc"
+  # Test payer details (from Postman working request)
+  payer_instrument_token: "3bdc3bc8-5d57-4451-85e5-aa8a9deb210d"  # From Postman
+
 # Order Details Configuration (Merchant Payment Flow - Step 9)
 order_details:
   order_reference: "176888-6726-665218"

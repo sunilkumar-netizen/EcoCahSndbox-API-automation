@@ -12,11 +12,20 @@ Feature: Pay to Merchant- Order Details
         And I am authenticated with valid app token
         And I have valid user token from PIN verification
 
-    @smoke @order_details @merchant_payment @sasai
-    Scenario: Get order details with valid order reference
+    @smoke @order_details @merchant_payment @sasai @dynamic
+    Scenario: Get order details with dynamic order reference from utility payment
         Given I have valid user authentication
-        And I have order reference "176888-6726-665218"
-        When I send order details request to "/bff/v2/order/details/176888-6726-665218"
+        And I have service type "sasai-app-payment"
+        And I have request ID "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"
+        When I send payment options request to "/bff/v1/payment/options"
+        Then response status code should be 200
+        And response should contain payment options
+        Given I have utility payment request body
+        When I send utility payment request to "/bff/v2/order/utility/payment"
+        Then response status code should be 200
+        And response should contain payment confirmation
+        And I extract order reference from payment response
+        When I send order details request with extracted reference
         Then response status code should be 200
         And response time should be less than 5000 ms
         And response should contain order details

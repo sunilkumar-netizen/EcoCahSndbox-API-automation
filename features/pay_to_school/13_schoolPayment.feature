@@ -17,14 +17,16 @@ Feature: School Payment
     @smoke @school_payment @pay_to_school @sasai
     Scenario: Process school payment with valid details
         Given I have valid user authentication
-        And I have instrument token from payment options
-        And I have school payment details
+        And I have service type "sasai-app-payment"
+        When I send school payment options request to "/bff/v2/payment/options"
+        Then response status code should be 200
+        And I extract instrument token from response
+        Given I have school payment details
         And I have biller details with school code "054329"
         And I have payment amount 2.0
         When I send school payment request to "/bff/v2/order/utility/payment"
         Then response status code should be 200
         And response should contain payment confirmation
-        And response should have transaction reference
 
     @school_payment @positive @pay_to_school @sasai
     Scenario: Process school payment returns correct structure

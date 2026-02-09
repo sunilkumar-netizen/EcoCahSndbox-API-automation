@@ -8,7 +8,6 @@ from behave import given, when, then
 import json
 import requests
 
-
 import time
 
 
@@ -30,6 +29,7 @@ def step_have_instrument_token(context):
 @given('I have school payment details')
 def step_have_school_payment_details(context):
     """Set default school payment details"""
+    config = context.config_loader
     context.payment_details = {
         "feeAmount": 0,
         "currency": "USD",
@@ -53,7 +53,7 @@ def step_have_school_payment_details(context):
         "channel": "sasai-super-app",
         "deviceInfo": {
             "simNumber": "03d88760-d411-11f0-9694-15a487face2d",
-            "deviceId": context.config.get('device_id', '03d88760-d411-11f0-9694-15a487face2d'),
+            "deviceId": config.get('device_id', '03d88760-d411-11f0-9694-15a487face2d'),
             "model": "realme - RMX3741",
             "network": "unidentified",
             "latitude": "28.4307472",
@@ -306,7 +306,8 @@ def step_extract_instrument_token_from_response(context):
 @when('I send school payment request to "{endpoint}"')
 def step_send_school_payment_request(context, endpoint):
     """Send POST request to school payment endpoint"""
-    url = f"{context.config_loader.get('api.base_url')}{endpoint}"
+    config = context.config_loader
+    url = f"{config.get('api.base_url')}{endpoint}"
     
     # Build headers
     headers = {
@@ -319,7 +320,7 @@ def step_send_school_payment_request(context, endpoint):
         'Connection': 'keep-alive',
         'appChannel': 'sasai-super-app',
         'simNumber': '03d88760-d411-11f0-9694-15a487face2d',
-        'deviceId': context.config.get('device_id', '03d88760-d411-11f0-9694-15a487face2d'),
+        'deviceId': config.get('device_id', '03d88760-d411-11f0-9694-15a487face2d'),
         'model': 'realme - RMX3741',
         'network': 'unidentified',
         'latitude': '28.4310954',
