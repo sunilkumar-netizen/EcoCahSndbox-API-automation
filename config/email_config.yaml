@@ -1,0 +1,61 @@
+# Email Configuration for Test Reports
+# Configure SMTP settings and recipient lists
+
+email:
+  enabled: true  # Set to false to disable email reports
+  
+  # SMTP Server Configuration
+  smtp:
+    server: "in-v3.mailjet.com"  # Mailjet SMTP server
+    port: 587  # TLS port
+    use_tls: true
+    use_ssl: false
+    
+  # Sender Configuration
+  sender:
+    email: "notifications@sasai.global"
+    name: "Sasai Automation"
+    username: "e23f1b7f4b3419cf979fa818b49edd7c"
+    password: "1fa9368a5326d7138134ef30ebad1ee1"
+    
+  # Recipients Configuration
+  recipients:
+    to:
+      - "sunil.kumar8@kellton.com"
+      - "vishnu@sasaifintech.com"
+    cc: []
+    bcc: []
+  
+  # Email Content Configuration
+  content:
+    subject_prefix: "OneApp API Automation Execution Report - {timestamp}"
+    include_summary: true
+    include_failed_tests: true
+    include_charts: false
+    attach_full_report: false
+    
+  # Trigger Conditions
+  triggers:
+    send_always: true
+    send_on_failure: true
+    send_on_success: false
+    
+  # Additional Settings
+  settings:
+    retry_count: 3
+    timeout: 30
+
+# Environment-specific overrides
+environments:
+  qa:
+    recipients:
+      to:
+        - "sunil.kumar8@kellton.com"
+  uat:
+    recipients:
+      to:
+        - "sunil.kumar8@kellton.com"
+  prod:
+    recipients:
+      to:
+        - "sunil.kumar8@kellton.com"

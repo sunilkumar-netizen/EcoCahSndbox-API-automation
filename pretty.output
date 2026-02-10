@@ -1,3 +1,514 @@
+Feature: Login- App Token # features/Login/1_appToken.feature:1
+  As a merchant
+  I want to get an app token from Sasai Payment Gateway API
+  So that I can authenticate and access payment services
+  Background:   # features/Login/1_appToken.feature:6
+
+  @smoke @appToken @sasai
+  Scenario: Get app token with valid credentials     # features/Login/1_appToken.feature:10
+    Given API is available                           # steps/common_steps.py:9
+    Given I have valid Sasai login credentials       # steps/appToken_steps.py:21
+    When I send POST request to "/bff/v1/auth/token" # steps/common_steps.py:28
+    Then response status code should be 200          # steps/common_steps.py:116
+    And response body should contain "accessToken"   # steps/common_steps.py:132
+    And I store the "accessToken" from response      # steps/common_steps.py:176
+
+Feature: Login- OTP Request # features/Login/2_otpRequest.feature:1
+  As a merchant
+  I want to request OTP from Sasai Payment Gateway API
+  So that I can verify user identity for secure transactions
+  Background:   # features/Login/2_otpRequest.feature:6
+
+  @smoke @otp @sasai
+  Scenario: Request OTP with valid parameters                            # features/Login/2_otpRequest.feature:11
+    Given API is available                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                          # steps/otp_steps.py:9
+    Given I have valid OTP request details                               # steps/otp_steps.py:38
+    When I send authenticated POST request to "/bff/v2/auth/otp/request" # steps/otp_steps.py:105
+    Then response status code should be 200                              # steps/common_steps.py:116
+    And response time should be less than 5000 ms                        # steps/common_steps.py:169
+
+Feature: Login- OTP Verify # features/Login/3_otpVerify.feature:1
+  As a merchant
+  I want to verify OTP from Sasai Payment Gateway API
+  So that I can complete user authentication for secure transactions
+  Background:   # features/Login/3_otpVerify.feature:6
+
+  @smoke @otp_verify @sasai
+  Scenario: Verify OTP with valid parameters                          # features/Login/3_otpVerify.feature:11
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    Given I have valid OTP verification details                       # steps/otp_verify_steps.py:10
+    When I send OTP verification request to "/bff/v1/auth/otp/verify" # steps/otp_verify_steps.py:212
+    Then response status code should be 200                           # steps/common_steps.py:116
+    And response time should be less than 5000 ms                     # steps/common_steps.py:169
+    And response should contain OTP verification status               # steps/otp_verify_steps.py:234
+
+Feature: Login- PIN Verify # features/Login/4_pinVerify.feature:1
+  As a merchant
+  I want to verify PIN from Sasai Payment Gateway API
+  So that I can authenticate users securely for transactions
+  Background:   # features/Login/4_pinVerify.feature:9
+
+  @smoke @pin_verify @sasai
+  Scenario: Verify PIN with valid parameters                          # features/Login/4_pinVerify.feature:14
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    Given I have valid PIN verification details                       # steps/pin_verify_steps.py:10
+    When I send PIN verification request to "/bff/v4/auth/pin/verify" # steps/pin_verify_steps.py:222
+    Then response status code should be 200                           # steps/common_steps.py:116
+    And response time should be less than 5000 ms                     # steps/common_steps.py:169
+    And response should contain PIN verification status               # steps/pin_verify_steps.py:290
+
+Feature: Login Devices # features/Login_devices/5_loginDevices.feature:1
+  As a user
+  I want to retrieve my login devices from Sasai Payment Gateway API
+  So that I can view all devices where I'm logged in
+  Background:   # features/Login_devices/5_loginDevices.feature:9
+
+  @smoke @login_devices @sasai
+  Scenario: Get login devices with valid user token                   # features/Login_devices/5_loginDevices.feature:15
+    Given API is available                                            # steps/common_steps.py:9
+    And I am authenticated with valid app token                       # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                 # steps/login_devices_steps.py:9
+    Given I have valid user authentication                            # steps/login_devices_steps.py:92
+    When I send login devices request to "/bff/v1/user/login-devices" # steps/login_devices_steps.py:165
+    Then response status code should be 200                           # steps/common_steps.py:116
+    And response time should be less than 5000 ms                     # steps/common_steps.py:169
+    And response should contain login devices list                    # steps/login_devices_steps.py:205
+
+Feature: Search Contact for P2P Payment # features/Pay_to_Person(Domestic)/1_searchContact.feature:1
+  As a user
+  I want to search for contacts
+  So that I can send money to them via P2P payment
+  Background:   # features/Pay_to_Person(Domestic)/1_searchContact.feature:12
+
+  @smoke @p2p_search @search_contact @sasai @p2p
+  Scenario: Search for contact with valid query                          # features/Pay_to_Person(Domestic)/1_searchContact.feature:18
+    Given API is available                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                          # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                    # steps/login_devices_steps.py:9
+    Given I have valid user authentication                               # steps/login_devices_steps.py:92
+    And I have search query "EcoCash User Five"                          # steps/p2p_search_contact_steps.py:29
+    And I have country code "ZW"                                         # steps/otp_steps.py:60
+    And I have page number 1                                             # steps/school_search_steps.py:28
+    And I have page count 20                                             # steps/p2p_search_contact_steps.py:54
+    When I send contact search request to "/search/v3/collection/search" # steps/p2p_search_contact_steps.py:65
+    Then response status code should be 200                              # steps/common_steps.py:116
+    And response body should be valid JSON                               # steps/common_steps.py:139
+    And response should contain search results                           # steps/school_search_steps.py:152
+    And response should have contacts list                               # steps/p2p_search_contact_steps.py:135
+    And search results should not be empty                               # steps/p2p_search_contact_steps.py:169
+
+Feature: Beneficiary Account Lookup for P2P Payment # features/Pay_to_Person(Domestic)/2_accountLookup.feature:1
+  As a user
+  I want to lookup beneficiary account details
+  So that I can verify the recipient before making a P2P payment
+  Background:   # features/Pay_to_Person(Domestic)/2_accountLookup.feature:12
+
+  @smoke @p2p_lookup @account_lookup @sasai @p2p
+  Scenario: Lookup beneficiary account with valid phone number             # features/Pay_to_Person(Domestic)/2_accountLookup.feature:18
+    Given API is available                                                 # steps/common_steps.py:9
+    And I am authenticated with valid app token                            # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                      # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                 # steps/login_devices_steps.py:92
+    And I have account number "+263789124669"                              # steps/p2p_account_lookup_steps.py:33
+    When I send account lookup request to "/bff/v3/payment/account/lookup" # steps/p2p_account_lookup_steps.py:109
+    Then response status code should be 200                                # steps/common_steps.py:116
+    And response body should be valid JSON                                 # steps/common_steps.py:139
+    And response should contain account details                            # steps/p2p_account_lookup_steps.py:205
+    And response should have beneficiary name                              # steps/p2p_account_lookup_steps.py:233
+    And response should have account status                                # steps/p2p_account_lookup_steps.py:270
+
+Feature: P2P Payment Options API # features/Pay_to_Person(Domestic)/3_paymentOptions.feature:1
+  As a user
+  I want to get available payment options for P2P transfers
+  So that I can choose how to send money to another person
+  Background:   # features/Pay_to_Person(Domestic)/3_paymentOptions.feature:13
+
+  @smoke @p2p_payment_options @payment_options @p2p @sasai
+  Scenario: Get payment options for P2P transfer                         # features/Pay_to_Person(Domestic)/3_paymentOptions.feature:19
+    Given API is available                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                          # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                    # steps/login_devices_steps.py:9
+    Given I have valid user authentication                               # steps/login_devices_steps.py:92
+    And I have service type "ZWPersonPaymentOptions"                     # steps/payment_options_steps.py:16
+    And I have request ID "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"         # steps/merchant_lookup_steps.py:94
+    When I send P2P payment options request to "/bff/v2/payment/options" # steps/p2p_payment_options_steps.py:59
+    Then response status code should be 200                              # steps/common_steps.py:116
+    And response body should be valid JSON                               # steps/common_steps.py:139
+    And response should contain P2P payment options                      # steps/p2p_payment_options_steps.py:150
+    And P2P payment options should not be empty                          # steps/p2p_payment_options_steps.py:172
+
+Feature: P2P Payment Transfer API # features/Pay_to_Person(Domestic)/4_paymentTransfer.feature:1
+  As a user
+  I want to transfer money to another person
+  So that I can send payments through the P2P payment system
+  Background:   # features/Pay_to_Person(Domestic)/4_paymentTransfer.feature:13
+
+  @smoke @p2p_transfer @payment_transfer @p2p @sasai
+  Scenario: Execute P2P payment transfer with valid details                  # features/Pay_to_Person(Domestic)/4_paymentTransfer.feature:19
+    Given API is available                                                   # steps/common_steps.py:9
+    And I am authenticated with valid app token                              # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                        # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                   # steps/login_devices_steps.py:92
+    And I have account number "+263789124669"                                # steps/p2p_account_lookup_steps.py:33
+    When I send account lookup request to "/bff/v3/payment/account/lookup"   # steps/p2p_account_lookup_steps.py:109
+    Then response status code should be 200                                  # steps/common_steps.py:116
+    Given I have service type "ZWPersonPaymentOptions"                       # steps/payment_options_steps.py:16
+    When I send P2P payment options request to "/bff/v2/payment/options"     # steps/p2p_payment_options_steps.py:59
+    Then response status code should be 200                                  # steps/common_steps.py:116
+    Given I fetch payment instrument details                                 # steps/p2p_payment_transfer_steps.py:273
+    And I have payment transfer details                                      # steps/p2p_payment_transfer_steps.py:20
+      | field             | value                |
+      | feeAmount         | 0.5                  |
+      | currency          | ZWG                  |
+      | payerAmount       | 2                    |
+      | payeeAmount       | 2                    |
+      | paymentMethod     | wallet               |
+      | provider          | ecocash              |
+      | beneficiaryName   | Ropafadzo Nyagwaya   |
+      | beneficiaryMobile | +263789124669        |
+      | message           | P2P Test Transaction |
+      | subType           | p2p-pay              |
+      | channel           | sasai-super-app      |
+    When I send payment transfer request to "/bff/v2/order/transfer/payment" # steps/p2p_payment_transfer_steps.py:362
+    Then response status code should be 200 or 201                           # steps/common_steps.py:123
+      Assertion Failed: Expected status code to be 200 or 201, but got 400
+
+    And response body should be valid JSON                                   # None
+    And response should contain P2P transaction details                      # None
+    And response should have P2P order ID                                    # None
+    And P2P transaction status should be valid                               # None
+
+Feature: P2P Order Details # features/Pay_to_Person(Domestic)/5_orderDetails.feature:1
+  As a user
+  I want to retrieve order details for my P2P payment transactions
+  So that I can view transaction history and verify payment status
+  Background:   # features/Pay_to_Person(Domestic)/5_orderDetails.feature:20
+
+  @smoke @p2p_order_details @order_details @p2p @sasai @dynamic
+  Scenario: Get order details with dynamic order ID from payment transfer    # features/Pay_to_Person(Domestic)/5_orderDetails.feature:26
+    Given API is available                                                   # steps/common_steps.py:9
+    And I am authenticated with valid app token                              # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                        # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                   # steps/login_devices_steps.py:92
+    And I have account number "+263789124669"                                # steps/p2p_account_lookup_steps.py:33
+    When I send account lookup request to "/bff/v3/payment/account/lookup"   # steps/p2p_account_lookup_steps.py:109
+    Then response status code should be 200                                  # steps/common_steps.py:116
+    Given I have service type "ZWPersonPaymentOptions"                       # steps/payment_options_steps.py:16
+    When I send P2P payment options request to "/bff/v2/payment/options"     # steps/p2p_payment_options_steps.py:59
+    Then response status code should be 200                                  # steps/common_steps.py:116
+    Given I have complete payment transfer payload                           # steps/p2p_payment_transfer_steps.py:39
+    When I send payment transfer request to "/bff/v2/order/transfer/payment" # steps/p2p_payment_transfer_steps.py:362
+    Then response status code should be 200 or 201                           # steps/common_steps.py:123
+      Assertion Failed: Expected status code to be 200 or 201, but got 400
+
+    And response should have P2P order ID                                    # None
+    When I send P2P order details request to "/bff/v2/order/details"         # None
+    Then response status code should be 200                                  # None
+    And response body should be valid JSON                                   # None
+    And response should contain P2P order details data                       # None
+    And P2P order details should have order ID                               # None
+    And P2P order details should have status                                 # None
+    And P2P order details should have amount                                 # None
+
+Feature: Offline Biller Lookup # features/offline_biller_pay/1_offlineBillerLookup.feature:1
+  As a user
+  I want to lookup offline billers by merchant code
+  So that I can get biller details for bill payments
+  Background:   # features/offline_biller_pay/1_offlineBillerLookup.feature:11
+
+  @smoke @offline_biller_lookup @offline_biller_pay @sasai
+  Scenario: Lookup offline biller with valid merchant code                         # features/offline_biller_pay/1_offlineBillerLookup.feature:17
+    Given API is available                                                         # steps/common_steps.py:9
+    And I am authenticated with valid app token                                    # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                              # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                         # steps/login_devices_steps.py:92
+    And I have merchant code "8002"                                                # steps/merchant_lookup_code_steps.py:21
+    When I send offline biller lookup request to "/bff/v1/catalog/merchant-lookup" # steps/offline_biller_lookup_steps.py:18
+    Then response status code should be 200                                        # steps/common_steps.py:116
+    And response body should be valid JSON                                         # steps/common_steps.py:139
+    And response should contain biller details                                     # steps/offline_biller_lookup_steps.py:103
+    And response should have merchant code                                         # steps/offline_biller_lookup_steps.py:122
+    And response should have merchant name                                         # steps/offline_biller_lookup_steps.py:146
+
+Feature: Get Payment Options for Bill Payment # features/offline_biller_pay/2_paymentOptions.feature:1
+  As a user
+  I want to get available payment options for bill payment
+  So that I can choose a payment method for offline biller payment
+  Background:   # features/offline_biller_pay/2_paymentOptions.feature:12
+
+  @smoke @payment_options @offline_biller_pay @sasai
+  Scenario: Get payment options with valid user token                # features/offline_biller_pay/2_paymentOptions.feature:18
+    Given API is available                                           # steps/common_steps.py:9
+    And I am authenticated with valid app token                      # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                # steps/login_devices_steps.py:9
+    Given I have valid user authentication                           # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                      # steps/payment_options_steps.py:16
+    When I send payment options request to "/bff/v2/payment/options" # steps/payment_options_steps.py:70
+    Then response status code should be 200                          # steps/common_steps.py:116
+    And response body should be valid JSON                           # steps/common_steps.py:139
+    And response should contain payment instruments                  # steps/payment_options_steps.py:350
+    And response should have instrument token                        # steps/payment_options_steps.py:393
+
+Feature: Offline Bill Payment # features/offline_biller_pay/3_offlineBillPayment.feature:1
+  As a user
+  I want to make offline bill payments
+  So that I can pay utility bills using my wallet
+  Background:   # features/offline_biller_pay/3_offlineBillPayment.feature:12
+
+  @smoke @offline_bill_payment @offline_biller_pay @sasai
+  Scenario: Make offline bill payment with valid details                        # features/offline_biller_pay/3_offlineBillPayment.feature:18
+    Given API is available                                                      # steps/common_steps.py:9
+    And I am authenticated with valid app token                                 # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                           # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                      # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                                 # steps/payment_options_steps.py:16
+    When I send payment options request to "/bff/v2/payment/options"            # steps/payment_options_steps.py:70
+    Then response status code should be 200                                     # steps/common_steps.py:116
+    And I extract instrument token from response                                # steps/school_payment_options_steps.py:527
+    Given I have offline bill payment details                                   # steps/offline_bill_payment_steps.py:23
+      | field         | value      |
+      | merchantCode  | 8002       |
+      | accountNumber | 1472365288 |
+      | amount        | 3.0        |
+      | currency      | USD        |
+      | operatorId    | SZWOBO0001 |
+      | categoryId    | SZWC10019  |
+    When I send offline bill payment request to "/bff/v2/order/utility/payment" # steps/offline_bill_payment_steps.py:175
+    Then response status code should be 200                                     # steps/common_steps.py:116
+    And response body should be valid JSON                                      # steps/common_steps.py:139
+    And response should contain payment confirmation                            # steps/church_payment_steps.py:389
+    And response should have transaction ID                                     # steps/church_payment_steps.py:533
+    And I should see final payment status in response                           # steps/offline_bill_payment_steps.py:653
+    And payment status should be success                                        # steps/offline_bill_payment_steps.py:591
+
+Feature: Church Search by Name # features/pay_to_church/14_churchSearch.feature:1
+  As a user
+  I want to search for churches by name
+  So that I can find churches for making donations or payments
+  Background:   # features/pay_to_church/14_churchSearch.feature:11
+
+  @smoke @church_search @pay_to_church @sasai
+  Scenario: Search churches with valid query                                             # features/pay_to_church/14_churchSearch.feature:17
+    Given API is available                                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                                          # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                    # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                               # steps/login_devices_steps.py:92
+    And I have search type "CHURCH"                                                      # steps/school_search_steps.py:21
+    And I have page number 0                                                             # steps/school_search_steps.py:28
+    And I have page size 10                                                              # steps/school_search_steps.py:35
+    And I have name query "church"                                                       # steps/school_search_steps.py:42
+    When I send church search request to "/bff/v1/catalog/search-school-church-merchant" # steps/church_search_steps.py:46
+    Then response status code should be 200                                              # steps/common_steps.py:116
+    And response should contain search results                                           # steps/school_search_steps.py:152
+
+Feature: Church Lookup by Code # features/pay_to_church/15_churchLookupByCode.feature:1
+  As a user
+  I want to lookup church details by merchant code
+  So that I can verify church information before making payments
+  Background:   # features/pay_to_church/15_churchLookupByCode.feature:11
+
+  @smoke @church_lookup @pay_to_church @sasai
+  Scenario: Lookup church with valid merchant code                                   # features/pay_to_church/15_churchLookupByCode.feature:17
+    Given API is available                                                           # steps/common_steps.py:9
+    And I am authenticated with valid app token                                      # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                           # steps/login_devices_steps.py:92
+    And I have merchant code "394875"                                                # steps/merchant_lookup_code_steps.py:21
+    When I send merchant lookup by code request to "/bff/v1/catalog/merchant-lookup" # steps/merchant_lookup_code_steps.py:70
+    Then response status code should be 200                                          # steps/common_steps.py:116
+    And response should contain merchant details by code                             # steps/merchant_lookup_code_steps.py:172
+    And merchant response should contain code                                        # steps/merchant_lookup_code_steps.py:238
+
+Feature: Church Payment Options # features/pay_to_church/16_churchPaymentOptions.feature:1
+  As a user
+  I want to get available payment options for church payments
+  So that I can choose how to make my church donation
+  Background:   # features/pay_to_church/16_churchPaymentOptions.feature:12
+
+  @smoke @church_payment_options @pay_to_church @sasai
+  Scenario: Get church payment options with valid authentication            # features/pay_to_church/16_churchPaymentOptions.feature:18
+    Given API is available                                                  # steps/common_steps.py:9
+    And I am authenticated with valid app token                             # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                       # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                  # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                             # steps/payment_options_steps.py:16
+    And I have device information headers                                   # steps/school_payment_options_steps.py:27
+    When I send church payment options request to "/bff/v2/payment/options" # steps/church_payment_options_steps.py:20
+    Then response status code should be 200                                 # steps/common_steps.py:116
+    And response should have payment options                                # steps/payment_options_steps.py:249
+    And response should have payment instruments                            # steps/school_payment_options_steps.py:213
+
+Feature: Church Payment # features/pay_to_church/17_churchPayment.feature:1
+  As a user
+  I want to make payments to churches
+  So that I can donate or contribute to church activities
+  Background:   # features/pay_to_church/17_churchPayment.feature:12
+
+  @smoke @church_payment @pay_to_church @sasai
+  Scenario: Make church payment with valid details                        # features/pay_to_church/17_churchPayment.feature:18
+    Given API is available                                                # steps/common_steps.py:9
+    And I am authenticated with valid app token                           # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                     # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                           # steps/payment_options_steps.py:16
+    And I have device information headers                                 # steps/school_payment_options_steps.py:27
+    When I send payment options request to "/bff/v2/payment/options"      # steps/payment_options_steps.py:70
+    Then response status code should be 200                               # steps/common_steps.py:116
+    And I extract instrument token from response                          # steps/school_payment_options_steps.py:527
+    Given I have church payment details                                   # steps/church_payment_steps.py:18
+    When I send church payment request to "/bff/v2/order/utility/payment" # steps/church_payment_steps.py:317
+    Then response status code should be 200                               # steps/common_steps.py:116
+    And response should contain payment confirmation                      # steps/church_payment_steps.py:389
+    And response should have payment status                               # steps/church_payment_steps.py:514
+    And response should have transaction ID                               # steps/church_payment_steps.py:533
+
+Feature: Pay to Merchant- Lookup # features/pay_to_merchants/6_merchantLookup.feature:1
+  As a user
+  I want to lookup merchant details from Sasai Payment Gateway API
+  So that I can verify merchant information before making a payment
+  Background:   # features/pay_to_merchants/6_merchantLookup.feature:10
+
+  @smoke @merchant_lookup @pay_to_merchant @sasai
+  Scenario: Lookup merchant with valid parameters                                                         # features/pay_to_merchants/6_merchantLookup.feature:16
+    Given API is available                                                                                # steps/common_steps.py:9
+    And I am authenticated with valid app token                                                           # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                                     # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                                                # steps/login_devices_steps.py:92
+    And I have merchant lookup parameters                                                                 # steps/merchant_lookup_steps.py:17
+    When I send merchant lookup request to "/catalog/v1/categories/SZWC10002/operators/SZWOM00001/lookup" # steps/merchant_lookup_steps.py:238
+    Then response status code should be 200                                                               # steps/common_steps.py:116
+    And response time should be less than 5000 ms                                                         # steps/common_steps.py:169
+    And response should contain merchant details                                                          # steps/merchant_lookup_steps.py:339
+
+Feature: Pay to Merchant- Payment Options # features/pay_to_merchants/7_paymentOptions.feature:1
+  As a user
+  I want to verify payment options from Sasai Payment Gateway API
+  So that I can see available payment methods before making a merchant payment
+  Background:   # features/pay_to_merchants/7_paymentOptions.feature:10
+
+  @smoke @payment_options @merchant_payment @sasai
+  Scenario: Verify payment options with valid parameters             # features/pay_to_merchants/7_paymentOptions.feature:16
+    Given API is available                                           # steps/common_steps.py:9
+    And I am authenticated with valid app token                      # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                # steps/login_devices_steps.py:9
+    Given I have valid user authentication                           # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                      # steps/payment_options_steps.py:16
+    When I send payment options request to "/bff/v1/payment/options" # steps/payment_options_steps.py:70
+    Then response status code should be 200                          # steps/common_steps.py:116
+    And response time should be less than 5000 ms                    # steps/common_steps.py:169
+    And response should contain payment options                      # steps/payment_options_steps.py:160
+
+Feature: Pay to Merchant- Payment # features/pay_to_merchants/8_utilityPayment.feature:1
+  As a user
+  I want to make utility payments through Sasai Payment Gateway API
+  So that I can complete merchant payments for utility services
+  Background:   # features/pay_to_merchants/8_utilityPayment.feature:10
+
+  @smoke @utility_payment @merchant_payment @sasai
+  Scenario: Create utility payment with valid parameters                   # features/pay_to_merchants/8_utilityPayment.feature:22
+    Given API is available                                                 # steps/common_steps.py:9
+    And I am authenticated with valid app token                            # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                      # steps/login_devices_steps.py:9
+    And I have valid user authentication                                   # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                            # steps/payment_options_steps.py:16
+    And I have request ID "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"           # steps/merchant_lookup_steps.py:94
+    When I send payment options request to "/bff/v1/payment/options"       # steps/payment_options_steps.py:70
+    Then response status code should be 200                                # steps/common_steps.py:116
+    And response should contain payment options                            # steps/payment_options_steps.py:160
+    Given I have valid user authentication                                 # steps/login_devices_steps.py:92
+    And I have utility payment request body                                # steps/utility_payment_steps.py:17
+    When I send utility payment request to "/bff/v2/order/utility/payment" # steps/utility_payment_steps.py:304
+    Then response status code should be 200                                # steps/common_steps.py:116
+    And response time should be less than 10000 ms                         # steps/common_steps.py:169
+    And response should contain payment confirmation                       # steps/church_payment_steps.py:389
+
+Feature: Pay to Merchant- Order Details # features/pay_to_merchants/9_orderDetails.feature:1
+  As a user
+  I want to retrieve order details from Sasai Payment Gateway API
+  So that I can view payment details that were completed in the merchant flow
+  Background:   # features/pay_to_merchants/9_orderDetails.feature:10
+
+  @smoke @order_details @merchant_payment @sasai @dynamic
+  Scenario: Get order details with dynamic order reference from utility payment  # features/pay_to_merchants/9_orderDetails.feature:16
+    Given API is available                                                       # steps/common_steps.py:9
+    And I am authenticated with valid app token                                  # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                            # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                       # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                                  # steps/payment_options_steps.py:16
+    And I have request ID "bdefac7b-bbc0-48b4-9ef0-84e6b9b34a6f"                 # steps/merchant_lookup_steps.py:94
+    When I send payment options request to "/bff/v1/payment/options"             # steps/payment_options_steps.py:70
+    Then response status code should be 200                                      # steps/common_steps.py:116
+    And response should contain payment options                                  # steps/payment_options_steps.py:160
+    Given I have utility payment request body                                    # steps/utility_payment_steps.py:17
+    When I send utility payment request to "/bff/v2/order/utility/payment"       # steps/utility_payment_steps.py:304
+    Then response status code should be 200                                      # steps/common_steps.py:116
+    And response should contain payment confirmation                             # steps/church_payment_steps.py:389
+    And I extract order reference from payment response                          # steps/order_details_steps.py:355
+    When I send order details request with extracted reference                   # steps/order_details_steps.py:233
+    Then response status code should be 200                                      # steps/common_steps.py:116
+    And response time should be less than 5000 ms                                # steps/common_steps.py:169
+    And response should contain order details                                    # steps/order_details_steps.py:259
+
+Feature: Pay to School- search # features/pay_to_school/10_schoolSearch.feature:1
+  As a user
+  I want to search for schools, churches, and merchants
+  So that I can make payments to these institutions
+  Background:   # features/pay_to_school/10_schoolSearch.feature:11
+
+  @smoke @school_search @pay_to_school @sasai
+  Scenario: Search for schools with valid parameters                                     # features/pay_to_school/10_schoolSearch.feature:17
+    Given API is available                                                               # steps/common_steps.py:9
+    And I am authenticated with valid app token                                          # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                    # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                               # steps/login_devices_steps.py:92
+    And I have search type "SCHOOL"                                                      # steps/school_search_steps.py:21
+    And I have page number 0                                                             # steps/school_search_steps.py:28
+    And I have page size 10                                                              # steps/school_search_steps.py:35
+    And I have name query "school"                                                       # steps/school_search_steps.py:42
+    When I send school search request to "/bff/v1/catalog/search-school-church-merchant" # steps/school_search_steps.py:73
+    Then response status code should be 200                                              # steps/common_steps.py:116
+    And response should contain search results                                           # steps/school_search_steps.py:152
+    And response should have pagination info                                             # steps/church_search_steps.py:143
+
+Feature: School Search by Code # features/pay_to_school/11_merchantLookupByCode.feature:1
+  As a user
+  I want to search for schools by merchant code
+  So that I can get school/church/merchant details for payments
+  Background:   # features/pay_to_school/11_merchantLookupByCode.feature:11
+
+  @smoke @merchant_lookup_code @pay_to_school @sasai
+  Scenario: Lookup merchant by valid code                                            # features/pay_to_school/11_merchantLookupByCode.feature:17
+    Given API is available                                                           # steps/common_steps.py:9
+    And I am authenticated with valid app token                                      # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                                # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                           # steps/login_devices_steps.py:92
+    And I have merchant code "054329"                                                # steps/merchant_lookup_code_steps.py:21
+    When I send merchant lookup by code request to "/bff/v1/catalog/merchant-lookup" # steps/merchant_lookup_code_steps.py:70
+    Then response status code should be 200                                          # steps/common_steps.py:116
+    And response should contain merchant details by code                             # steps/merchant_lookup_code_steps.py:172
+    And response should have merchant information                                    # steps/merchant_lookup_code_steps.py:187
+
+Feature: School Payment Options # features/pay_to_school/12_schoolPaymentOptions.feature:1
+  As a user
+  I want to get available payment options for school payments
+  So that I can choose how to pay for school/church/merchant services
+  Background:   # features/pay_to_school/12_schoolPaymentOptions.feature:11
+
+  @smoke @school_payment_options @pay_to_school @sasai
+  Scenario: Get payment options for school payment                          # features/pay_to_school/12_schoolPaymentOptions.feature:17
+    Given API is available                                                  # steps/common_steps.py:9
+    And I am authenticated with valid app token                             # steps/otp_steps.py:9
+    And I have valid user token from PIN verification                       # steps/login_devices_steps.py:9
+    Given I have valid user authentication                                  # steps/login_devices_steps.py:92
+    And I have service type "sasai-app-payment"                             # steps/payment_options_steps.py:16
+    When I send school payment options request to "/bff/v2/payment/options" # steps/school_payment_options_steps.py:135
+    Then response status code should be 200                                 # steps/common_steps.py:116
+    And response should contain payment options                             # steps/payment_options_steps.py:160
+    And response should have payment instruments                            # steps/school_payment_options_steps.py:213
+
 Feature: School Payment # features/pay_to_school/13_schoolPayment.feature:1
   As a user
   I want to make payments to schools
@@ -15,9 +526,9 @@ Feature: School Payment # features/pay_to_school/13_schoolPayment.feature:1
     Then response status code should be 200                                 # steps/common_steps.py:116
     And I extract instrument token from response                            # steps/school_payment_options_steps.py:527
     Given I have school payment details                                     # steps/school_payment_steps.py:29
-    And I have biller details with school code "054329"                     # steps/school_payment_steps.py:83
-    And I have payment amount 2.0                                           # steps/school_payment_steps.py:94
-    When I send school payment request to "/bff/v2/order/utility/payment"   # steps/school_payment_steps.py:306
+    And I have biller details with school code "054329"                     # steps/school_payment_steps.py:84
+    And I have payment amount 2.0                                           # steps/school_payment_steps.py:95
+    When I send school payment request to "/bff/v2/order/utility/payment"   # steps/school_payment_steps.py:307
     Then response status code should be 200                                 # steps/common_steps.py:116
     And response should contain payment confirmation                        # steps/church_payment_steps.py:389
 

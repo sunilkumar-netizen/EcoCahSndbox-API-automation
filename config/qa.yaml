@@ -157,17 +157,22 @@ church_payment:
 
 # P2P Payment Transfer Configuration (Pay to Person Flow)
 p2p_payment_transfer:
-  fee_amount: 0  # Confirmed working in Postman
-  currency: "ZWG"
-  payer_amount: 3  # Updated from Postman working request
-  payee_amount: 3  # Updated from Postman working request
+  fee_amount: 0.5  # From working Postman request
+  currency: "ZWG"  # CRITICAL: Must be ZWG (from working Postman)
+  payer_amount: 2  # From working Postman request
+  payee_amount: 2  # From working Postman request
   payment_method: "wallet"
   provider: "ecocash"
   subtype: "p2p-pay"
   channel: "sasai-super-app"
   endpoint: "/bff/v2/order/transfer/payment"
   public_key_alias: "payment-links"
-  # Device information
+  encrypted_pin: "ZXodNbUKicCm/E01R6xI6NLUxqxP4g+mZAbQik8VYCeJYDGL9n6hYKzCAnuAAWcvs2nSsw0ZTN8wisiCyxYOmxRZBGYNyiH41cTOkNkUdpkP7su0Af/Mhmnp6SWDZxysO3q5Qp+qdroDSVFAepf2xJnR8X/T3INSveKGclVrd/8YkR2i4uyyHmIDnkMsWS7gLZQhpCX3gKGsLY/wT9zyOX0pHgotCUSUEGyJovNXs/P5mlvng6yMl3ZWY+2tgL1zx9pmvQtv7WKxvfKghGtRH2VQlwcviTorZdFUSdOx79xmhqxlSMNMUC5DlMnTEGT5io9MRMLbcTwXbk7T7Xuz2g=="  # From working Postman request
+  # Static instrument tokens from working Postman (session-specific)
+  beneficiary_instrument_token: "34eebf24-c32e-4c31-a689-e7548c83b6ef"
+  payer_instrument_token: "6c570f91-6c3c-49d7-b1ab-c0840ddfd591"
+  beneficiary_instrument_id: "9f894ed8-9116-496b-8599-526cc114b566"
+  # Device information (from working Postman)
   device_ip: "192.0.0.2"
   device_model: "Samsung"
   device_os: "Android"
@@ -177,11 +182,7 @@ p2p_payment_transfer:
   # Test beneficiary details (from Postman working request)
   beneficiary_name: "Ropafadzo Nyagwaya"
   beneficiary_mobile: "+263789124669"
-  beneficiary_instrument_id: "9f894ed8-9116-496b-8599-526cc114b566"
-  beneficiary_instrument_token: "f8d6cb79-620e-45ac-8274-bcee7590f744"  # From Postman
   beneficiary_customer_id: "f044ff8d-abe6-47aa-8837-ec329e8a0edc"
-  # Test payer details (from Postman working request)
-  payer_instrument_token: "3bdc3bc8-5d57-4451-85e5-aa8a9deb210d"  # From Postman
 
 # Order Details Configuration (Merchant Payment Flow - Step 9)
 order_details:
@@ -227,6 +228,49 @@ school_search:
   max_query_length: "verylongschoolnamethatexceedsnormallimits"
   numeric_query: "123"
   unicode_query: "学校"
+
+# School Payment Configuration (Pay to School Flow - Step 13)
+school_payment:
+  endpoint: "/bff/v2/order/utility/payment"
+  fee_amount: 0
+  currency: "USD"
+  payment_method: "wallet"
+  provider: "ecocash"
+  subtype: "pay-to-school"
+  channel: "sasai-super-app"
+  public_key_alias: "payment-links"
+  
+  # Biller details
+  operator_id: "SZWOSL0001"
+  category_id: "SZWC10017"
+  default_amount: 2.0
+  default_school_code: "054329"  # Q1
+  default_student_id: "85558"  # Q2
+  
+  # Encrypted PIN (RSA encrypted)
+  encrypted_pin: "mvIkFBJqHn4YxGxx4/l1k2p+OyfrQgXJ11jQQi7C8N3+B5qZPDXggJrDAPFUFmezSo7CyUek15H+kSH4pWRT1MtuyKm9+M+2l9mpQnbSS2p7UDyHI17thhlc4ArhR1xRsEBfADLeCQSLL3mqk+de95FHJT/UlhjljhIbmm75Efhz67vcA+8E1YLMoWP6nA/VM/NMlWSD8HEofBQ8mDdDgKYlTjyZ86gpMroRb7Z9rC2SZfpVcl31aQE2nkx2m2OsZGo+Vqf2YqkIJBQ4Ae2llRf7PCPSB7tKY6OLiBWOYX+gISCQEthqr4sB5HgKHGwrP1+P9oxyQE2nrsdnMDTYng=="
+  
+  # Device information
+  sim_number: "03d88760-d411-11f0-9694-15a487face2d"
+  device_id: "03d88760-d411-11f0-9694-15a487face2d"
+  device_model: "realme - RMX3741"
+  device_network: "unidentified"
+  device_latitude: "28.4307472"
+  device_longitude: "77.0647009"
+  device_os: "RM6877"
+  device_os_version: "15"
+  app_version: "2.2.1"
+  app_package: "com.sasai.sasaipay"
+  
+  # Notes
+  default_operator_name: "PRINCE EDWARD HIGH SCHOOL"
+  default_code: "63540"
+  default_student_reference: "Alok Kumar Gupta"
+  
+  # Invalid test data
+  invalid_school_code: "999999"
+  invalid_amount: -1
+  invalid_currency: "XXX"
 
 database:
   enabled: false

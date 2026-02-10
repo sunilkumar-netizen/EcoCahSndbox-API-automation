@@ -14,7 +14,7 @@ Feature: Search Contact for P2P Payment
         And I am authenticated with valid app token
         And I have valid user token from PIN verification
 
-    @smoke @p2p_search @search_contact @sasai
+    @smoke @p2p_search @search_contact @sasai @p2p
     Scenario: Search for contact with valid query
         Given I have valid user authentication
         And I have search query "EcoCash User Five"

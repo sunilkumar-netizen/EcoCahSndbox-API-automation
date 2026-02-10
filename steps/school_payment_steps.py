@@ -28,48 +28,49 @@ def step_have_instrument_token(context):
 
 @given('I have school payment details')
 def step_have_school_payment_details(context):
-    """Set default school payment details"""
+    """Set default school payment details from config"""
     config = context.config_loader
+    
     context.payment_details = {
-        "feeAmount": 0,
-        "currency": "USD",
+        "feeAmount": config.get('school_payment.fee_amount', 0),
+        "currency": config.get('school_payment.currency', 'USD'),
         "billerDetails": {
-            "operatorId": "SZWOSL0001",
-            "categoryId": "SZWC10017",
-            "amount": 2.0,
-            "currency": "USD",
-            "Q1": "054329",
-            "Q2": "85558"
+            "operatorId": config.get('school_payment.operator_id', 'SZWOSL0001'),
+            "categoryId": config.get('school_payment.category_id', 'SZWC10017'),
+            "amount": config.get('school_payment.default_amount', 2.0),
+            "currency": config.get('school_payment.currency', 'USD'),
+            "Q1": config.get('school_payment.default_school_code', '054329'),
+            "Q2": config.get('school_payment.default_student_id', '85558')
         },
-        "payerAmount": 2.0,
+        "payerAmount": config.get('school_payment.default_amount', 2.0),
         "payerDetails": {
             "instrumentToken": context.instrument_token,
-            "paymentMethod": "wallet",
-            "provider": "ecocash",
-            "pin": "mvIkFBJqHn4YxGxx4/l1k2p+OyfrQgXJ11jQQi7C8N3+B5qZPDXggJrDAPFUFmezSo7CyUek15H+kSH4pWRT1MtuyKm9+M+2l9mpQnbSS2p7UDyHI17thhlc4ArhR1xRsEBfADLeCQSLL3mqk+de95FHJT/UlhjljhIbmm75Efhz67vcA+8E1YLMoWP6nA/VM/NMlWSD8HEofBQ8mDdDgKYlTjyZ86gpMroRb7Z9rC2SZfpVcl31aQE2nkx2m2OsZGo+Vqf2YqkIJBQ4Ae2llRf7PCPSB7tKY6OLiBWOYX+gISCQEthqr4sB5HgKHGwrP1+P9oxyQE2nrsdnMDTYng==",
-            "publicKeyAlias": "payment-links"
+            "paymentMethod": config.get('school_payment.payment_method', 'wallet'),
+            "provider": config.get('school_payment.provider', 'ecocash'),
+            "pin": config.get('school_payment.encrypted_pin'),
+            "publicKeyAlias": config.get('school_payment.public_key_alias', 'payment-links')
         },
-        "subType": "pay-to-school",
-        "channel": "sasai-super-app",
+        "subType": config.get('school_payment.subtype', 'pay-to-school'),
+        "channel": config.get('school_payment.channel', 'sasai-super-app'),
         "deviceInfo": {
-            "simNumber": "03d88760-d411-11f0-9694-15a487face2d",
-            "deviceId": config.get('device_id', '03d88760-d411-11f0-9694-15a487face2d'),
-            "model": "realme - RMX3741",
-            "network": "unidentified",
-            "latitude": "28.4307472",
-            "longitude": "77.0647009",
-            "os": "RM6877",
-            "osVersion": "15",
-            "appVersion": "2.2.1",
-            "package": "com.sasai.sasaipay"
+            "simNumber": config.get('school_payment.sim_number'),
+            "deviceId": config.get('school_payment.device_id'),
+            "model": config.get('school_payment.device_model'),
+            "network": config.get('school_payment.device_network'),
+            "latitude": config.get('school_payment.device_latitude'),
+            "longitude": config.get('school_payment.device_longitude'),
+            "os": config.get('school_payment.device_os'),
+            "osVersion": config.get('school_payment.device_os_version'),
+            "appVersion": config.get('school_payment.app_version'),
+            "package": config.get('school_payment.app_package')
         },
         "notes": {
-            "operatorName": "PRINCE EDWARD HIGH SCHOOL",
-            "code": "63540",
-            "studentReference": "Alok Kumar Gupta"
+            "operatorName": config.get('school_payment.default_operator_name'),
+            "code": config.get('school_payment.default_code'),
+            "studentReference": config.get('school_payment.default_student_reference')
         }
     }
-    context.base_test.logger.info("Set default school payment details")
+    context.base_test.logger.info("Set default school payment details from config")
 
 
 @given('I have school payment details with device info')
@@ -309,25 +310,25 @@ def step_send_school_payment_request(context, endpoint):
     config = context.config_loader
     url = f"{config.get('api.base_url')}{endpoint}"
     
-    # Build headers
+    # Build headers from config
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f"Bearer {context.user_token}",
-        'os': 'RM6877',
+        'os': config.get('school_payment.device_os', 'RM6877'),
         'deviceType': 'android',
-        'currentVersion': '2.2.1',
+        'currentVersion': config.get('school_payment.app_version', '2.2.1'),
         'Accept-Encoding': 'gzip',
         'Connection': 'keep-alive',
-        'appChannel': 'sasai-super-app',
-        'simNumber': '03d88760-d411-11f0-9694-15a487face2d',
-        'deviceId': config.get('device_id', '03d88760-d411-11f0-9694-15a487face2d'),
-        'model': 'realme - RMX3741',
-        'network': 'unidentified',
-        'latitude': '28.4310954',
-        'longitude': '77.0638722',
-        'osVersion': '15',
-        'appVersion': '2.2.1',
-        'package': 'com.sasai.sasaipay'
+        'appChannel': config.get('school_payment.channel', 'sasai-super-app'),
+        'simNumber': config.get('school_payment.sim_number'),
+        'deviceId': config.get('school_payment.device_id'),
+        'model': config.get('school_payment.device_model'),
+        'network': config.get('school_payment.device_network'),
+        'latitude': config.get('school_payment.device_latitude'),
+        'longitude': config.get('school_payment.device_longitude'),
+        'osVersion': config.get('school_payment.device_os_version'),
+        'appVersion': config.get('school_payment.app_version'),
+        'package': config.get('school_payment.app_package')
     }
     
     # Add request ID if available

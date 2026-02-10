@@ -24,12 +24,13 @@ Feature: P2P Payment Transfer API
         Given I have service type "ZWPersonPaymentOptions"
         When I send P2P payment options request to "/bff/v2/payment/options"
         Then response status code should be 200
-        Given I have payment transfer details:
+        Given I fetch payment instrument details
+        And I have payment transfer details:
             | field                  | value                                    |
             | feeAmount              | 0.5                                      |
             | currency               | ZWG                                      |
-            | payerAmount            | 3                                        |
-            | payeeAmount            | 3                                        |
+            | payerAmount            | 2                                        |
+            | payeeAmount            | 2                                        |
             | paymentMethod          | wallet                                   |
             | provider               | ecocash                                  |
             | beneficiaryName        | Ropafadzo Nyagwaya                       |

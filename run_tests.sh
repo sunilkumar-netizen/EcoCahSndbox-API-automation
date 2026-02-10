@@ -181,6 +181,17 @@ echo ""
 echo -e "${GREEN}✅ Modern HTML report generated: reports/html-report/report.html${NC}"
 echo -e "${YELLOW}To view HTML report, run: open reports/html-report/report.html${NC}"
 
+# Send Email Report
+echo ""
+echo -e "${BLUE}Sending email report...${NC}"
+if python3 scripts/send_email_report.py "$ENV" "$TAGS"; then
+    echo -e "${GREEN}✅ Email report sent successfully${NC}"
+else
+    echo -e "${YELLOW}⚠️ Email report sending failed or skipped${NC}"
+    echo -e "${YELLOW}   Check SMTP_PASSWORD environment variable${NC}"
+    echo -e "${YELLOW}   For Gmail: Use App Password from https://myaccount.google.com/apppasswords${NC}"
+fi
+
 # Print log file location
 LOG_FILE=$(ls -t logs/*.log 2>/dev/null | head -1)
 if [ ! -z "$LOG_FILE" ]; then
