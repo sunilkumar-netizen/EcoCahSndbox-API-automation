@@ -71,6 +71,19 @@ config/*prod*.yaml
 *.temp
 .cache/
 .temp/
+pretty.output
+
+# Temporary documentation
+*_COMPLETE.md
+*_SUCCESS.md
+*_SUMMARY.md
+*_FINAL_REPORT.md
+*_RESULTS.md
+*_QUICK_REF.md
+*_FIX_GUIDE.md
+*_FEATURE_SUMMARY.md
+DEPLOYMENT_SUCCESS.md
+STEP_NAVIGATION_FIXED.md
 
 # OS specific
 Thumbs.db
