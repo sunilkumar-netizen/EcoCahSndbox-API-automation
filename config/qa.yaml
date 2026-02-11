@@ -272,6 +272,47 @@ school_payment:
   invalid_amount: -1
   invalid_currency: "XXX"
 
+# Payment Reminder Configuration
+payment_reminder:
+  # Customer ID for setting reminders (from token payload)
+  customer_id: "ef1ebf57-8e9b-4c6c-be89-de72dfd7376c"
+  
+  # Default reminder settings
+  default_amount: "127"
+  default_currency: "ZWG"
+  default_alias: "NonRec Person Reminder"
+  default_frequency: "no-repeat"
+  
+  # Beneficiary details for P2P reminders
+  default_beneficiary: "+263789124669"
+  default_payment_type: "wallet"
+  
+  # Reminder ID for delete operations (can be extracted dynamically during tests)
+  reminder_id: "698c43199d9bea2a8e44ef6d"
+  
+  # Test data
+  test_amounts:
+    minimum: 1
+    normal: 100
+    large: 1000
+  
+  valid_frequencies:
+    - "no-repeat"
+    - "daily"
+    - "weekly"
+    - "monthly"
+  
+  valid_currencies:
+    - "ZWG"
+    - "USD"
+  
+  # Invalid test data for negative scenarios
+  invalid_frequency: "invalid-frequency"
+  invalid_currency: "INVALID"
+  invalid_beneficiary: "invalid-phone"
+  zero_amount: 0
+  negative_amount: -100
+
 database:
   enabled: false
   host: qa-db.example.com

@@ -22,7 +22,7 @@ email:
   recipients:
     to:
       - "sunil.kumar8@kellton.com"
-      - "vishnu@sasaifintech.com"
+     # - "vishnu@sasaifintech.com"
     cc: []
     bcc: []
   

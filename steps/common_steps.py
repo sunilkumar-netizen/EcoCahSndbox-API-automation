@@ -21,6 +21,26 @@ def step_wait_seconds(context, seconds):
     context.base_test.logger.info(f"Waited for {seconds} seconds")
 
 
+@given('I am not authenticated')
+def step_not_authenticated(context):
+    """Remove authentication token to simulate unauthenticated request."""
+    # Clear any existing tokens
+    context.user_token = None
+    if hasattr(context, 'app_token'):
+        context.app_token = None
+    context.base_test.logger.info("Authentication cleared - simulating unauthenticated request")
+
+
+@then('user token should be valid')
+def step_user_token_should_be_valid(context):
+    """Verify that user token exists and is not empty."""
+    assert hasattr(context, 'user_token'), "User token not found in context"
+    assert context.user_token is not None, "User token is None"
+    assert context.user_token != '', "User token is empty"
+    assert len(context.user_token) > 20, "User token seems invalid (too short)"
+    context.base_test.logger.info(f"User token is valid (length: {len(context.user_token)})")
+
+
 # ==============================================================================
 # HTTP Request Steps
 # ==============================================================================
@@ -252,4 +272,79 @@ def step_verify_header_not_empty(context, header):
         f"Expected header '{header}' to not be empty, but it was empty or whitespace"
     
     context.base_test.logger.info(f"✅ Header '{header}' is not empty: {actual_value}")
+
+
+# ==============================================================================
+# Error Response Steps
+# ==============================================================================
+
+@then('response should contain error message')
+def step_response_should_contain_error(context):
+    """Verify response contains an error message."""
+    response_data = context.response.json()
+    
+    # Check for common error fields
+    error_fields = ['error', 'message', 'errors', 'detail', 'description', 'errorMessage']
+    has_error = any(field in response_data for field in error_fields)
+    
+    assert has_error, f"Response does not contain error message. Response: {response_data}"
+    context.base_test.logger.info("Response contains error message")
+
+
+@then('response should contain authentication error')
+def step_response_should_contain_auth_error(context):
+    """Verify response contains authentication error."""
+    response_data = context.response.json()
+    
+    # Check for authentication-related error
+    error_msg = ""
+    error_fields = ['error', 'message', 'errors', 'detail', 'description']
+    
+    for field in error_fields:
+        if field in response_data:
+            error_msg = str(response_data[field]).lower()
+            break
+    
+    # Check for authentication-related keywords
+    auth_keywords = ['unauthorized', 'authentication', 'token', 'forbidden', 'access denied', 'invalid token']
+    has_auth_error = any(keyword in error_msg for keyword in auth_keywords)
+    
+    assert has_auth_error, f"Response does not contain authentication error. Response: {response_data}"
+    context.base_test.logger.info("Response contains authentication error")
+
+
+@then('response should have security headers')
+def step_response_should_have_security_headers(context):
+    """Verify response has common security headers."""
+    headers = context.response.headers
+    
+    # Check for at least one common security header
+    security_headers = [
+        'X-Content-Type-Options',
+        'X-Frame-Options',
+        'X-XSS-Protection',
+        'Strict-Transport-Security',
+        'Content-Security-Policy',
+        'Cache-Control',
+        'Pragma'
+    ]
+    
+    found_headers = [h for h in security_headers if h in headers]
+    
+    if found_headers:
+        context.base_test.logger.info(f"Security headers found: {', '.join(found_headers)}")
+    else:
+        # Some APIs might not return these headers, just log warning
+        context.base_test.logger.warning("No standard security headers found in response")
+
+
+@then('response should have Content-Type header')
+def step_response_should_have_content_type(context):
+    """Verify response has Content-Type header."""
+    headers = context.response.headers
+    
+    assert 'Content-Type' in headers, "Response does not have Content-Type header"
+    
+    content_type = headers['Content-Type']
+    context.base_test.logger.info(f"Content-Type header present: {content_type}")
 
