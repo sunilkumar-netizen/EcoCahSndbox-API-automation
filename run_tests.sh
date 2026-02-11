@@ -106,6 +106,7 @@ echo -e "${BLUE}Clearing old test results...${NC}"
 rm -rf reports/allure-results/*
 rm -rf reports/allure-report
 rm -rf reports/html-report
+rm -rf reports/junit/*
 
 # Create necessary directories
 mkdir -p reports/allure-results
@@ -118,7 +119,7 @@ BEHAVE_CMD="behave -D env=$ENV"
 
 # Add tags if specified
 if [ ! -z "$TAGS" ]; then
-    BEHAVE_CMD="$BEHAVE_CMD --tags=$TAGS"
+    BEHAVE_CMD="$BEHAVE_CMD --tags=\"$TAGS\""
 fi
 
 # Add Allure formatter if enabled

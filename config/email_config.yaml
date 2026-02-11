@@ -32,7 +32,7 @@ email:
     include_summary: true
     include_failed_tests: true
     include_charts: false
-    attach_full_report: false
+    attach_full_report: true
     
   # Trigger Conditions
   triggers:
