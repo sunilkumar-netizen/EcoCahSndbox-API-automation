@@ -7,7 +7,7 @@ Feature: Login- OTP Request
         Given API is available
         And I am authenticated with valid app token
 
-    @smoke @otp @sasai
+    @otp @positive @sasai
     Scenario: Request OTP with valid parameters
         Given I have valid OTP request details
         When I send authenticated POST request to "/bff/v2/auth/otp/request"

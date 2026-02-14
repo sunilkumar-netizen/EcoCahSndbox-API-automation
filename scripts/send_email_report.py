@@ -140,20 +140,52 @@ class EmailReportGenerator:
     def categorize_feature(self, feature_name):
         """Categorize feature by name"""
         feature_lower = feature_name.lower()
-        if any(x in feature_lower for x in ['login', 'otp', 'pin', 'token', 'auth']):
+        
+        # Payment Reminders - check first to avoid conflicts with "payment" keyword
+        if any(x in feature_lower for x in ['reminder', 'reminders']):
+            return '⏰ Payment Reminders'
+        
+        # Payment Request - check before P2P to catch payment request features
+        elif 'payment request' in feature_lower or 'paymentrequest' in feature_lower:
+            return '📲 Payment Request'
+        
+        # Authentication & Login
+        elif any(x in feature_lower for x in ['login devices', 'login device']):
+            return '📱 Login Devices'
+        elif any(x in feature_lower for x in ['login', 'otp', 'pin', 'token', 'auth', 'app token']):
             return '🔐 Authentication & Login'
-        elif any(x in feature_lower for x in ['p2p', 'person', 'transfer']):
+        
+        # P2P Payments
+        elif any(x in feature_lower for x in ['p2p', 'person', 'transfer', 'contact', 'account lookup']):
             return '👥 P2P Payments'
+        
+        # School Payments
         elif 'school' in feature_lower:
             return '🎓 School Payments'
+        
+        # Church Payments
         elif 'church' in feature_lower:
             return '⛪ Church Payments'
+        
+        # Merchant & Utility Payments
         elif any(x in feature_lower for x in ['merchant', 'utility']):
-            return '🏪 Merchant Payments'
-        elif 'offline' in feature_lower:
-            return '📴 Offline Biller'
+            return '🏪 Merchant & Utility Payments'
+        
+        # Offline Biller Payments
+        elif any(x in feature_lower for x in ['offline', 'biller']):
+            return '📴 Offline Biller Payments'
+        
+        # Order Details (can be from any payment type)
+        elif 'order' in feature_lower:
+            return '🏪 Order Management'
+        
+        # Payment Options (can be from any payment type)
+        elif 'payment option' in feature_lower:
+            return '💳 Payment Options'
+        
+        # If no match found, return a generic category
         else:
-            return '📦 Other'
+            return '📦 Other APIs'
     
     def format_duration(self, seconds):
         """Format duration"""

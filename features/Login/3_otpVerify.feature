@@ -7,7 +7,7 @@ Feature: Login- OTP Verify
         Given API is available
         And I am authenticated with valid app token
 
-    @smoke @otp_verify @sasai
+    @otp_verify @positive @sasai
     Scenario: Verify OTP with valid parameters
         Given I have valid OTP verification details
         When I send OTP verification request to "/bff/v1/auth/otp/verify"
