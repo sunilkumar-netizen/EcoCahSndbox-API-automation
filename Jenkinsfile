@@ -6,18 +6,23 @@ pipeline {
     parameters {
         choice(
             name: 'ENVIRONMENT',
-            choices: ['qa', 'dev', 'uat'],
+            choices: ['qa', 'uat', 'dev'],
             description: 'Environment to run tests against'
         )
         choice(
             name: 'TAGS',
-            choices: ['smoke', 'regression', 'payments', 'auth', 'users', 'all'],
-            description: 'Test tags to execute'
+            choices: ['smoke', '@sasai', 'regression', 'payments', 'auth', 'payment_request', 'all'],
+            description: 'Test tags to execute (smoke and @sasai use global auth optimization)'
         )
         booleanParam(
             name: 'PARALLEL_EXECUTION',
             defaultValue: false,
             description: 'Run tests in parallel'
+        )
+        booleanParam(
+            name: 'SEND_EMAIL_REPORT',
+            defaultValue: true,
+            description: 'Send email report after test execution'
         )
     }
     
@@ -61,6 +66,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 echo "🧪 Running ${params.TAGS} tests in ${params.ENVIRONMENT} environment..."
+                echo "ℹ️  Note: 'smoke' and '@sasai' tags use global authentication optimization (97% fewer auth API calls)"
                 script {
                     def tagParam = params.TAGS == 'all' ? '' : "--tags=${params.TAGS}"
                     
@@ -68,12 +74,23 @@ pipeline {
                         . ${VENV_DIR}/bin/activate
                         mkdir -p ${REPORTS_DIR}/allure-results
                         mkdir -p ${REPORTS_DIR}/junit
+                        mkdir -p ${REPORTS_DIR}/html-report
+                        mkdir -p logs
                         
+                        # Run tests with Behave
                         behave -D env=${params.ENVIRONMENT} ${tagParam} \
                             -f allure_behave.formatter:AllureFormatter \
                             -o ${REPORTS_DIR}/allure-results \
+                            -f behave_html_formatter:HTMLFormatter \
+                            -o ${REPORTS_DIR}/html-report/report.html \
                             --junit --junit-directory ${REPORTS_DIR}/junit \
                             || true
+                        
+                        # Send email report if enabled
+                        if [ "${params.SEND_EMAIL_REPORT}" = "true" ]; then
+                            echo "📧 Sending email report..."
+                            python3 scripts/send_email_report.py ${params.ENVIRONMENT} ${params.TAGS} || true
+                        fi
                     """
                 }
             }
@@ -114,33 +131,41 @@ pipeline {
         
         success {
             echo '✅ Pipeline completed successfully!'
-            emailext(
-                subject: "✅ API Tests PASSED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>Test Execution Successful</h2>
-                    <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
-                    <p><strong>Tags:</strong> ${params.TAGS}</p>
-                    <p><strong>Build:</strong> ${env.BUILD_NUMBER}</p>
-                    <p><a href="${env.BUILD_URL}allure">View Allure Report</a></p>
-                """,
-                to: "${env.NOTIFICATION_EMAIL}",
-                mimeType: 'text/html'
-            )
+            script {
+                def optimizationNote = (params.TAGS == 'smoke' || params.TAGS == '@sasai') ? 
+                    '<p><strong>🚀 Performance:</strong> Global authentication optimization enabled (97% fewer API calls)</p>' : ''
+                
+                emailext(
+                    subject: "✅ OneApp API Tests PASSED - ${params.ENVIRONMENT} - ${params.TAGS} - Build #${env.BUILD_NUMBER}",
+                    body: """
+                        <h2>✅ Test Execution Successful</h2>
+                        <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
+                        <p><strong>Tags:</strong> ${params.TAGS}</p>
+                        <p><strong>Build:</strong> ${env.BUILD_NUMBER}</p>
+                        ${optimizationNote}
+                        <p><a href="${env.BUILD_URL}allure">📊 View Allure Report</a></p>
+                        <p><a href="${env.BUILD_URL}console">📋 View Console Output</a></p>
+                    """,
+                    to: "sunil.kumar8@kellton.com, vishnu@sasaifintech.com",
+                    mimeType: 'text/html'
+                )
+            }
         }
         
         failure {
             echo '❌ Pipeline failed!'
             emailext(
-                subject: "❌ API Tests FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "❌ OneApp API Tests FAILED - ${params.ENVIRONMENT} - ${params.TAGS} - Build #${env.BUILD_NUMBER}",
                 body: """
-                    <h2>Test Execution Failed</h2>
+                    <h2>❌ Test Execution Failed</h2>
                     <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
                     <p><strong>Tags:</strong> ${params.TAGS}</p>
                     <p><strong>Build:</strong> ${env.BUILD_NUMBER}</p>
-                    <p><a href="${env.BUILD_URL}console">View Console Output</a></p>
-                    <p><a href="${env.BUILD_URL}allure">View Allure Report</a></p>
+                    <p><a href="${env.BUILD_URL}console">📋 View Console Output</a></p>
+                    <p><a href="${env.BUILD_URL}allure">📊 View Allure Report</a></p>
+                    <p><strong>⚠️ Action Required:</strong> Please investigate the failures</p>
                 """,
-                to: "${env.NOTIFICATION_EMAIL}",
+                to: "sunil.kumar8@kellton.com, vishnu@sasaifintech.com",
                 mimeType: 'text/html'
             )
         }
