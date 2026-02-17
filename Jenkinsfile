@@ -99,7 +99,7 @@ pipeline {
                     echo "Running: ${cmd}"
                     sh """
                         chmod +x run_tests.sh
-                        ${cmd} || true
+                        ${cmd}
                     """
                 }
             }
