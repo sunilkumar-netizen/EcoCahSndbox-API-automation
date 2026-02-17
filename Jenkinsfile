@@ -161,7 +161,7 @@ pipeline {
                     : "${emoji} *API Automation – ${statusText}*\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nEnvironment: ${envName} | Tags: ${tagName}\n<${buildLink}|View Build> | <${reportLink}|HTML Report>"
                 catchError(buildResult: null, message: 'Slack notification skipped') {
                     slackSend(
-                        channel: '#api-automation-executions',
+                        channel: '#api-automation-test-executions',
                         color: color,
                         message: msg
                     )
