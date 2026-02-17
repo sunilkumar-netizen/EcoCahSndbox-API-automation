@@ -19,7 +19,7 @@ pipeline {
         )
         choice(
             name: 'TAGS',
-            choices: ['smoke', 'regression', 'payments', 'auth', 'users', 'all'],
+            choices: ['smoke', 'sasai', 'regression', 'payments', 'auth', 'users', 'all'],
             description: 'Test tags to execute (use "all" for full suite)'
         )
         booleanParam(
@@ -107,7 +107,19 @@ pipeline {
 
         stage('Generate Reports') {
             steps {
-                echo 'Test reports: see HTML Test Report in Publish Results (Allure plugin not installed on this Jenkins).'
+                echo 'Publishing test reports (HTML always; Allure if plugin installed)...'
+                script {
+                    catchError(buildResult: null, message: 'Allure report skipped (install Allure plugin to enable)') {
+                        allure([
+                            includeProperties: false,
+                            jdk: '',
+                            properties: [],
+                            reportBuildPolicy: 'ALWAYS',
+                            results: [[path: "${REPORTS_DIR}/allure-results"]]
+                        ])
+                    }
+                }
+                echo 'HTML Test Report: see link in Publish Results below.'
             }
         }
 
@@ -115,6 +127,7 @@ pipeline {
             steps {
                 echo 'Publishing test results and artifacts...'
                 junit "${REPORTS_DIR}/junit/*.xml"
+                // HTML Test Report = alternative to Allure when Allure plugin is not installed
                 publishHTML(target: [
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,

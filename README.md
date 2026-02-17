@@ -390,6 +390,41 @@ jobs:
 
 ### Jenkins Pipeline
 
+The project's **Jenkinsfile** uses **HTML Test Report** as the primary test report when the Allure plugin is not installed on Jenkins.
+
+**Report options on Jenkins:**
+
+| Option | When to use | Where to see |
+|--------|-------------|---------------|
+| **HTML Test Report** | Always (no extra plugin) | Build page → **HTML Test Report** (via publishHTML) |
+| **JUnit** | Always | Build page → **Test Result** |
+| **Allure** | Optional | Install Allure Plugin (see below); the Jenkinsfile already includes the `allure` step |
+
+The pipeline generates `reports/html-report/report.html` (from `run_tests.sh` / Behave HTML formatter) and publishes it as **HTML Test Report**, so you get a clickable report in the build sidebar without Allure.
+
+#### How to install the Allure plugin in Jenkins
+
+1. **Install the plugin**
+   - In Jenkins: **Manage Jenkins** → **Plugins** → **Available plugins**
+   - Search for **"Allure"** (plugin name: *Allure Report* or *allure-jenkins-plugin*)
+   - Check the box and click **Install without restart** (or **Download now and install after restart**)
+   - Wait until the install finishes; restart Jenkins if prompted
+
+2. **Install Allure Commandline (global tool)**  
+   The plugin needs the Allure CLI to generate reports.
+   - **Manage Jenkins** → **Tools**
+   - Find **Allure Commandline** (or **Allure installations**)
+   - Click **Add Allure Commandline**
+   - Enable **Install automatically**
+   - Pick a **Version** (e.g. **2.24.0** or latest)
+   - Set **Name** to e.g. `Allure-2.24` (or leave default)
+   - **Save**
+
+3. **Run the pipeline again**  
+   The Jenkinsfile already has the `allure` step. After the plugin and tool are installed, the next build will publish the Allure report and show an **Allure Report** link on the build page.
+
+**References:** [Allure Jenkins Plugin](https://plugins.jenkins.io/allure-jenkins-plugin/) | [Allure Report – Jenkins](https://allurereport.org/docs/integrations-jenkins)
+
 ```groovy
 pipeline {
     agent any
