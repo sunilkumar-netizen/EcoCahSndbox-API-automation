@@ -92,9 +92,10 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
+                    def envLower = params.ENVIRONMENT?.toLowerCase() ?: 'qa'
                     def tagArg = (params.TAGS == 'all') ? '' : "-t ${params.TAGS}"
                     def parallelArg = params.PARALLEL_EXECUTION ? '-p' : ''
-                    def cmd = "./run_tests.sh -e ${params.ENVIRONMENT} ${tagArg} ${parallelArg}".trim()
+                    def cmd = "./run_tests.sh -e ${envLower} ${tagArg} ${parallelArg}".trim()
                     echo "Running: ${cmd}"
                     sh """
                         chmod +x run_tests.sh
@@ -106,19 +107,7 @@ pipeline {
 
         stage('Generate Reports') {
             steps {
-                echo 'Publishing Allure report...'
-                script {
-                    catchError(buildResult: null, message: 'Allure report skipped') {
-                        allure([
-                            includeProperties: false,
-                            jdk: '',
-                            properties: [],
-                            reportBuildPolicy: 'ALWAYS',
-                            results: [[path: "${REPORTS_DIR}/allure-results"]]
-                        ])
-                    }
-                    // If Allure plugin is not installed, install "Allure Plugin" in Jenkins to get the report link
-                }
+                echo 'Test reports: see HTML Test Report in Publish Results (Allure plugin not installed on this Jenkins).'
             }
         }
 
