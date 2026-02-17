@@ -13,7 +13,7 @@ Feature: Church Search by Name
         And I am authenticated with valid app token
         And I have valid user token from PIN verification
 
-    @smoke @church_search @pay_to_church @sasai
+    @smoke @church_search @pay_to_church @sasai 
     Scenario: Search churches with valid query
         Given I have valid user authentication
         And I have search type "CHURCH"
@@ -25,7 +25,7 @@ Feature: Church Search by Name
         And response should contain search results
        # And response should have church list
 
-    @church_search @positive @pay_to_church @sasai
+    @church_search @positive @pay_to_church @sasai 
     Scenario: Search churches returns correct structure
         Given I have valid user authentication
         And I have search type "CHURCH"
