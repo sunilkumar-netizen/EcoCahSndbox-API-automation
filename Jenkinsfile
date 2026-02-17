@@ -146,6 +146,27 @@ pipeline {
     post {
         always {
             echo 'Pipeline finished.'
+            // Send Slack notification for every build (any ENVIRONMENT, any TAGS)
+            script {
+                def result = currentBuild.currentResult ?: 'UNKNOWN'
+                def envName = params.ENVIRONMENT ?: 'N/A'
+                def tagName = params.TAGS ?: 'N/A'
+                def emoji = (result == 'SUCCESS') ? '✅' : (result == 'FAILURE' ? '❌' : '⚠️')
+                def statusText = (result == 'SUCCESS') ? 'PASSED' : (result == 'FAILURE' ? 'FAILED' : 'UNSTABLE')
+                def color = (result == 'SUCCESS') ? 'good' : (result == 'FAILURE' ? 'danger' : 'warning')
+                def buildLink = "${env.BUILD_URL}"
+                def reportLink = "${env.BUILD_URL}HTML_20Test_20Report"
+                def msg = (result == 'FAILURE')
+                    ? "${emoji} *API Automation – ${statusText}*\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nEnvironment: ${envName} | Tags: ${tagName}\n<${buildLink}console|View Console>"
+                    : "${emoji} *API Automation – ${statusText}*\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nEnvironment: ${envName} | Tags: ${tagName}\n<${buildLink}|View Build> | <${reportLink}|HTML Report>"
+                catchError(buildResult: null, message: 'Slack notification skipped') {
+                    slackSend(
+                        channel: '#api-automation-executions',
+                        color: color,
+                        message: msg
+                    )
+                }
+            }
         }
         success {
             echo 'Pipeline completed successfully.'
@@ -162,16 +183,6 @@ pipeline {
                         """,
                         to: "${env.NOTIFICATION_EMAIL}",
                         mimeType: 'text/html'
-                    )
-                }
-                catchError(buildResult: null, message: 'Slack notification skipped') {
-                    slackSend(
-                        channel: '#api-automation-executions',
-                        color: 'good',
-                        message: """✅ *API Automation – PASSED*
-Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
-Environment: ${params.ENVIRONMENT} | Tags: ${params.TAGS}
-<${env.BUILD_URL}|View Build> | <${env.BUILD_URL}HTML_20Test_20Report|HTML Report>"""
                     )
                 }
             }
@@ -194,32 +205,10 @@ Environment: ${params.ENVIRONMENT} | Tags: ${params.TAGS}
                         mimeType: 'text/html'
                     )
                 }
-                catchError(buildResult: null, message: 'Slack notification skipped') {
-                    slackSend(
-                        channel: '#api-automation-executions',
-                        color: 'danger',
-                        message: """❌ *API Automation – FAILED*
-Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
-Environment: ${params.ENVIRONMENT} | Tags: ${params.TAGS}
-<${env.BUILD_URL}console|View Console>"""
-                    )
-                }
             }
         }
         unstable {
             echo 'Pipeline is unstable (e.g. test failures).'
-            script {
-                catchError(buildResult: null, message: 'Slack notification skipped') {
-                    slackSend(
-                        channel: '#api-automation-executions',
-                        color: 'warning',
-                        message: """⚠️ *API Automation – UNSTABLE* (some tests failed)
-Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
-Environment: ${params.ENVIRONMENT} | Tags: ${params.TAGS}
-<${env.BUILD_URL}|View Build> | <${env.BUILD_URL}HTML_20Test_20Report|HTML Report>"""
-                    )
-                }
-            }
         }
     }
 }
