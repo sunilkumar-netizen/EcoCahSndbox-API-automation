@@ -151,6 +151,16 @@ pipeline {
                         mimeType: 'text/html'
                     )
                 }
+                catchError(buildResult: null, message: 'Slack notification skipped') {
+                    slackSend(
+                        channel: '#api-automation-executions',
+                        color: 'good',
+                        message: """✅ *API Automation – PASSED*
+Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
+Environment: ${params.ENVIRONMENT} | Tags: ${params.TAGS}
+<${env.BUILD_URL}|View Build> | <${env.BUILD_URL}HTML_20Test_20Report|HTML Report>"""
+                    )
+                }
             }
         }
         failure {
@@ -171,10 +181,32 @@ pipeline {
                         mimeType: 'text/html'
                     )
                 }
+                catchError(buildResult: null, message: 'Slack notification skipped') {
+                    slackSend(
+                        channel: '#api-automation-executions',
+                        color: 'danger',
+                        message: """❌ *API Automation – FAILED*
+Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
+Environment: ${params.ENVIRONMENT} | Tags: ${params.TAGS}
+<${env.BUILD_URL}console|View Console>"""
+                    )
+                }
             }
         }
         unstable {
             echo 'Pipeline is unstable (e.g. test failures).'
+            script {
+                catchError(buildResult: null, message: 'Slack notification skipped') {
+                    slackSend(
+                        channel: '#api-automation-executions',
+                        color: 'warning',
+                        message: """⚠️ *API Automation – UNSTABLE* (some tests failed)
+Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
+Environment: ${params.ENVIRONMENT} | Tags: ${params.TAGS}
+<${env.BUILD_URL}|View Build> | <${env.BUILD_URL}HTML_20Test_20Report|HTML Report>"""
+                    )
+                }
+            }
         }
     }
 }
