@@ -1,4 +1,4 @@
-Feature: Wallet Balances - USD&ZWG Check Balance
+Feature: Wallet Balances - USD, ZWG & Diaspora
     As a user
     I want to check my wallet balance for different currencies
     So that I can view my available funds in my EcoCash wallet
@@ -17,16 +17,40 @@ Feature: Wallet Balances - USD&ZWG Check Balance
     @smoke @wallet_balance @wallet_balances @sasai
     Scenario: Check ZWG wallet balance with valid credentials
         Given I have valid user authentication
-        And I have wallet balance request payload with currency "ZWG"
+        And I have wallet balance request payload:
+            | field        | value    |
+            | country      | ZW       |
+            | currency     | ZWG      |
+            | providerName | ecocash  |
+            | providerCode | ecocash  |
         When I send wallet balance request to "/bff/v1/wallet/balance"
         Then response status code should be 200
         And response should contain wallet balance information
         And response body should be valid JSON
 
-    @smoke @regression @wallet_balance @wallet_balances @sasai
+    @smoke @wallet_balance @wallet_balances @sasai
     Scenario: Check USD wallet balance with valid credentials
         Given I have valid user authentication
-        And I have wallet balance request payload with currency "USD"
+        And I have wallet balance request payload:
+            | field        | value    |
+            | country      | ZW       |
+            | currency     | USD      |
+            | providerName | ecocash  |
+            | providerCode | ecocash  |
+        When I send wallet balance request to "/bff/v1/wallet/balance"
+        Then response status code should be 200
+        And response should contain wallet balance information
+        And response should contain currency "USD"
+
+    @smoke @wallet_balance @wallet_balances @sasai
+    Scenario: Check USD wallet balance with ecocash-diaspora provider
+        Given I have valid user authentication
+        And I have wallet balance request payload:
+            | field        | value             |
+            | country      | ZW                |
+            | currency     | USD               |
+            | providerName | ecocash-diaspora  |
+            | providerCode | ecocash-diaspora  |
         When I send wallet balance request to "/bff/v1/wallet/balance"
         Then response status code should be 200
         And response should contain wallet balance information

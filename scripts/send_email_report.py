@@ -175,6 +175,10 @@ class EmailReportGenerator:
         elif any(x in feature_lower for x in ['offline', 'biller']):
             return '📴 Offline Biller Payments'
         
+        # Wallet Balances - check for wallet balance related features
+        elif any(x in feature_lower for x in ['wallet balance', 'wallet balances', 'check balance']):
+            return '💰 Wallet Balances'
+        
         # Order Details (can be from any payment type)
         elif 'order' in feature_lower:
             return '🏪 Order Management'
