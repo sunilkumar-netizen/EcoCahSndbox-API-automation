@@ -1,18 +1,26 @@
-# Jenkinsfile for API Automation
+// Jenkinsfile for API Automation (uses run_tests.sh)
+// Pipeline: Checkout -> Setup -> Lint -> Run Tests (run_tests.sh) -> Reports -> Publish
+// Option A: agent any (requires python3-venv on the node - see README)
+// Option B: Docker agent below - works without installing Python on Jenkins node (requires Docker Pipeline plugin)
 
 pipeline {
-    agent any
-    
+    agent {
+        docker {
+            image 'python:3.10-slim'
+            reuseNode true
+        }
+    }
+
     parameters {
         choice(
             name: 'ENVIRONMENT',
-            choices: ['qa', 'uat', 'dev'],
+            choices: ['qa', 'dev', 'uat'],
             description: 'Environment to run tests against'
         )
         choice(
             name: 'TAGS',
-            choices: ['smoke', '@sasai', 'regression', 'payments', 'auth', 'payment_request', 'all'],
-            description: 'Test tags to execute (smoke and @sasai use global auth optimization)'
+            choices: ['smoke', 'sasai', 'regression', 'payments', 'auth', 'users', 'all'],
+            description: 'Test tags to execute (use "all" for full suite)'
         )
         booleanParam(
             name: 'PARALLEL_EXECUTION',
@@ -20,158 +28,187 @@ pipeline {
             description: 'Run tests in parallel'
         )
         booleanParam(
-            name: 'SEND_EMAIL_REPORT',
-            defaultValue: true,
-            description: 'Send email report after test execution'
+            name: 'SKIP_LINT',
+            defaultValue: false,
+            description: 'Skip code linting stage'
         )
     }
-    
+
     environment {
         PYTHON_VERSION = '3.10'
         VENV_DIR = 'venv'
         REPORTS_DIR = 'reports'
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                echo '📥 Checking out code...'
+                echo 'Checking out code...'
                 checkout scm
             }
         }
-        
+
         stage('Setup Environment') {
             steps {
-                echo '🔧 Setting up Python environment...'
+                echo 'Setting up Python environment...'
                 sh '''
-                    python3 -m venv ${VENV_DIR}
+                    set +e
+                    for py in python3.10 python3.9 python3; do
+                        if command -v $py >/dev/null 2>&1 && $py -m venv ${VENV_DIR} 2>/dev/null; then
+                            break
+                        fi
+                        rm -rf ${VENV_DIR}
+                    done
+                    set -e
+                    if [ ! -f ${VENV_DIR}/bin/activate ]; then
+                        echo ""
+                        echo "ERROR: Could not create Python virtual environment."
+                        echo "On Debian/Ubuntu Jenkins agents install Python and venv, e.g.:"
+                        echo "  sudo apt update && sudo apt install -y python3.10 python3.10-venv"
+                        echo "  (or: sudo apt install -y python3.8-venv if using Python 3.8)"
+                        exit 1
+                    fi
                     . ${VENV_DIR}/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
             }
         }
-        
+
         stage('Lint Code') {
+            when {
+                expression { return !params.SKIP_LINT }
+            }
             steps {
-                echo '🔍 Running code linting...'
+                echo 'Running code linting...'
                 sh '''
                     . ${VENV_DIR}/bin/activate
-                    pip install flake8
+                    pip install flake8 --quiet
                     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
                 '''
             }
         }
-        
+
         stage('Run Tests') {
             steps {
-                echo "🧪 Running ${params.TAGS} tests in ${params.ENVIRONMENT} environment..."
-                echo "ℹ️  Note: 'smoke' and '@sasai' tags use global authentication optimization (97% fewer auth API calls)"
                 script {
-                    def tagParam = params.TAGS == 'all' ? '' : "--tags=${params.TAGS}"
-                    
+                    def envLower = params.ENVIRONMENT?.toLowerCase() ?: 'qa'
+                    def tagArg = (params.TAGS == 'all') ? '' : "-t ${params.TAGS}"
+                    def parallelArg = params.PARALLEL_EXECUTION ? '-p' : ''
+                    def cmd = "./run_tests.sh -e ${envLower} ${tagArg} ${parallelArg}".trim()
+                    echo "Running: ${cmd}"
                     sh """
-                        . ${VENV_DIR}/bin/activate
-                        mkdir -p ${REPORTS_DIR}/allure-results
-                        mkdir -p ${REPORTS_DIR}/junit
-                        mkdir -p ${REPORTS_DIR}/html-report
-                        mkdir -p logs
-                        
-                        # Run tests with Behave
-                        behave -D env=${params.ENVIRONMENT} ${tagParam} \
-                            -f allure_behave.formatter:AllureFormatter \
-                            -o ${REPORTS_DIR}/allure-results \
-                            -f behave_html_formatter:HTMLFormatter \
-                            -o ${REPORTS_DIR}/html-report/report.html \
-                            --junit --junit-directory ${REPORTS_DIR}/junit \
-                            || true
-                        
-                        # Send email report if enabled
-                        if [ "${params.SEND_EMAIL_REPORT}" = "true" ]; then
-                            echo "📧 Sending email report..."
-                            python3 scripts/send_email_report.py ${params.ENVIRONMENT} ${params.TAGS} || true
-                        fi
+                        chmod +x run_tests.sh
+                        ${cmd} || true
                     """
                 }
             }
         }
-        
+
         stage('Generate Reports') {
             steps {
-                echo '📊 Generating test reports...'
+                echo 'Publishing test reports (HTML always; Allure if plugin installed)...'
                 script {
-                    allure([
-                        includeProperties: false,
-                        jdk: '',
-                        properties: [],
-                        reportBuildPolicy: 'ALWAYS',
-                        results: [[path: "${REPORTS_DIR}/allure-results"]]
-                    ])
+                    catchError(buildResult: null, message: 'Allure report skipped (install Allure plugin to enable)') {
+                        allure([
+                            includeProperties: false,
+                            jdk: '',
+                            properties: [],
+                            reportBuildPolicy: 'ALWAYS',
+                            results: [[path: "${REPORTS_DIR}/allure-results"]]
+                        ])
+                    }
                 }
+                echo 'HTML Test Report: see link in Publish Results below.'
             }
         }
-        
+
         stage('Publish Results') {
             steps {
-                echo '📤 Publishing test results...'
+                echo 'Publishing test results and artifacts...'
                 junit "${REPORTS_DIR}/junit/*.xml"
-                
-                // Archive artifacts
+                // HTML Test Report = alternative to Allure when Allure plugin is not installed
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: "${REPORTS_DIR}/html-report",
+                    reportFiles: 'report.html',
+                    reportName: 'HTML Test Report'
+                ])
                 archiveArtifacts artifacts: 'logs/*.log', allowEmptyArchive: true
                 archiveArtifacts artifacts: "${REPORTS_DIR}/**/*", allowEmptyArchive: true
+                archiveArtifacts artifacts: 'reports/html-report/report.html', allowEmptyArchive: true
             }
         }
     }
-    
+
     post {
         always {
-            echo '🧹 Cleaning up...'
-            cleanWs()
-        }
-        
-        success {
-            echo '✅ Pipeline completed successfully!'
+            echo 'Pipeline finished.'
+            // Send Slack notification for every build (any ENVIRONMENT, any TAGS)
             script {
-                def optimizationNote = (params.TAGS == 'smoke' || params.TAGS == '@sasai') ? 
-                    '<p><strong>🚀 Performance:</strong> Global authentication optimization enabled (97% fewer API calls)</p>' : ''
-                
-                emailext(
-                    subject: "✅ OneApp API Tests PASSED - ${params.ENVIRONMENT} - ${params.TAGS} - Build #${env.BUILD_NUMBER}",
-                    body: """
-                        <h2>✅ Test Execution Successful</h2>
-                        <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
-                        <p><strong>Tags:</strong> ${params.TAGS}</p>
-                        <p><strong>Build:</strong> ${env.BUILD_NUMBER}</p>
-                        ${optimizationNote}
-                        <p><a href="${env.BUILD_URL}allure">📊 View Allure Report</a></p>
-                        <p><a href="${env.BUILD_URL}console">📋 View Console Output</a></p>
-                    """,
-                    to: "sunil.kumar8@kellton.com, vishnu@sasaifintech.com",
-                    mimeType: 'text/html'
-                )
+                def result = currentBuild.currentResult ?: 'UNKNOWN'
+                def envName = params.ENVIRONMENT ?: 'N/A'
+                def tagName = params.TAGS ?: 'N/A'
+                def emoji = (result == 'SUCCESS') ? '✅' : (result == 'FAILURE' ? '❌' : '⚠️')
+                def statusText = (result == 'SUCCESS') ? 'PASSED' : (result == 'FAILURE' ? 'FAILED' : 'UNSTABLE')
+                def color = (result == 'SUCCESS') ? 'good' : (result == 'FAILURE' ? 'danger' : 'warning')
+                def buildLink = "${env.BUILD_URL}"
+                def reportLink = "${env.BUILD_URL}HTML_20Test_20Report"
+                def msg = (result == 'FAILURE')
+                    ? "${emoji} *API Automation – ${statusText}*\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nEnvironment: ${envName} | Tags: ${tagName}\n<${buildLink}console|View Console>"
+                    : "${emoji} *API Automation – ${statusText}*\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nEnvironment: ${envName} | Tags: ${tagName}\n<${buildLink}|View Build> | <${reportLink}|HTML Report>"
+                catchError(buildResult: null, message: 'Slack notification skipped') {
+                    slackSend(
+                        channel: '#api-automation-test-executions',
+                        color: color,
+                        message: msg
+                    )
+                }
             }
         }
-        
-        failure {
-            echo '❌ Pipeline failed!'
-            emailext(
-                subject: "❌ OneApp API Tests FAILED - ${params.ENVIRONMENT} - ${params.TAGS} - Build #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>❌ Test Execution Failed</h2>
-                    <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
-                    <p><strong>Tags:</strong> ${params.TAGS}</p>
-                    <p><strong>Build:</strong> ${env.BUILD_NUMBER}</p>
-                    <p><a href="${env.BUILD_URL}console">📋 View Console Output</a></p>
-                    <p><a href="${env.BUILD_URL}allure">📊 View Allure Report</a></p>
-                    <p><strong>⚠️ Action Required:</strong> Please investigate the failures</p>
-                """,
-                to: "sunil.kumar8@kellton.com, vishnu@sasaifintech.com",
-                mimeType: 'text/html'
-            )
+        success {
+            echo 'Pipeline completed successfully.'
+            script {
+                if (env.NOTIFICATION_EMAIL?.trim()) {
+                    emailext(
+                        subject: "API Tests PASSED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        body: """
+                            <h2>Test Execution Successful</h2>
+                            <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
+                            <p><strong>Tags:</strong> ${params.TAGS}</p>
+                            <p><strong>Build:</strong> ${env.BUILD_NUMBER}</p>
+                            <p><a href="${env.BUILD_URL}allure">View Allure Report</a></p>
+                        """,
+                        to: "${env.NOTIFICATION_EMAIL}",
+                        mimeType: 'text/html'
+                    )
+                }
+            }
         }
-        
+        failure {
+            echo 'Pipeline failed.'
+            script {
+                if (env.NOTIFICATION_EMAIL?.trim()) {
+                    emailext(
+                        subject: "API Tests FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        body: """
+                            <h2>Test Execution Failed</h2>
+                            <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
+                            <p><strong>Tags:</strong> ${params.TAGS}</p>
+                            <p><strong>Build:</strong> ${env.BUILD_NUMBER}</p>
+                            <p><a href="${env.BUILD_URL}console">View Console Output</a></p>
+                            <p><a href="${env.BUILD_URL}allure">View Allure Report</a></p>
+                        """,
+                        to: "${env.NOTIFICATION_EMAIL}",
+                        mimeType: 'text/html'
+                    )
+                }
+            }
+        }
         unstable {
-            echo '⚠️ Pipeline is unstable!'
+            echo 'Pipeline is unstable (e.g. test failures).'
         }
     }
 }
