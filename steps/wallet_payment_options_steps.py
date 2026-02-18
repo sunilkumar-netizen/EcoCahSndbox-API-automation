@@ -50,16 +50,56 @@ def step_send_wallet_payment_options_request(context, endpoint):
         'requestId': context.request_id
     }
     
-    logger.info(f"Sending GET request to {endpoint}")
-    logger.info(f"Query params: {params}")
-    logger.info(f"Headers: {list(headers.keys())}")
+    print(f"Sending GET request to {endpoint}")
+    print(f"Query params: {params}")
+    print(f"Headers: {list(headers.keys())}")
     
-    # Send GET request
+    # Send GET request with error handling
     api_client = APIClient(context.base_test.config)
-    context.response = api_client.get(endpoint, params=params, headers=headers)
-    context.base_test.response = context.response
     
-    logger.info(f"Response status: {context.response.status_code}")
+    try:
+        context.response = api_client.get(endpoint, params=params, headers=headers)
+        context.base_test.response = context.response
+        
+        print(f"✅ Response status: {context.response.status_code}")
+        
+        if context.response.status_code != 200:
+            print(f"⚠️ Non-200 Response body: {context.response.text[:500]}")
+        
+        logger.info(f"Response status: {context.response.status_code}")
+        
+    except Exception as e:
+        # Capture detailed error information for reporting
+        error_details = {
+            'error_type': type(e).__name__,
+            'error_message': str(e),
+            'endpoint': endpoint,
+            'service_type': params.get('serviceType', 'Unknown'),
+            'request_id': context.request_id
+        }
+        
+        print(f"\n{'='*80}")
+        print(f"❌ BACKEND ERROR DETAILS:")
+        print(f"{'='*80}")
+        print(f"Error Type: {error_details['error_type']}")
+        print(f"Error Message: {error_details['error_message']}")
+        print(f"Endpoint: {error_details['endpoint']}")
+        print(f"Service Type: {error_details['service_type']}")
+        print(f"Request ID: {error_details['request_id']}")
+        print(f"{'='*80}\n")
+        
+        # Check if it's a 500 error
+        if '500' in str(e).lower() or 'internal server error' in str(e).lower():
+            print("🔴 This is a BACKEND API SERVER ERROR (HTTP 500)")
+            print("   The request is correct, but the API backend cannot process it\n")
+        
+        logger.error(f"Payment options request failed: {error_details}")
+        
+        # Store error details in context
+        context.error_details = error_details
+        
+        # Re-raise the exception
+        raise
 
 
 # ============================================================================
