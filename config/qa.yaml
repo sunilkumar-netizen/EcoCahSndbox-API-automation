@@ -24,7 +24,7 @@ otp_verify:
 
 # OTP Request Configuration
 otp:
-  sender_id: "781707016" # 771222221 789124558 789124669 777222015 781707016
+  sender_id: "788830255" # 771222221 789124558 789124669 777222015 781707016
   country_code: "+263"
   default_purpose: "0" # 0 for authentication
   default_mode: "0" # 0 for SMS, 1 for Email

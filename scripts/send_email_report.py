@@ -149,6 +149,10 @@ class EmailReportGenerator:
         elif 'payment request' in feature_lower or 'paymentrequest' in feature_lower:
             return '📲 Payment Request'
         
+        # Send to Many - check before other payment types
+        elif any(x in feature_lower for x in ['send to many', 'send-to-many', 'sendtomany', 'sendmany', 'bulk payment', 'send many']):
+            return '📤 Send to Many'
+        
         # Authentication & Login
         elif any(x in feature_lower for x in ['login devices', 'login device']):
             return '📱 Login Devices'
