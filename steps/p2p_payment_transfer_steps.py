@@ -51,16 +51,30 @@ def step_complete_payment_transfer_payload(context):
                    config.get('p2p_payment_transfer.encrypted_pin', 
                              config.get('pin_verify.sample_encrypted_pin', ''))
     
-    # ✨ USE STATIC TOKENS FROM WORKING POSTMAN (same authentication session as PIN)
-    # Priority: STATIC from config (working Postman) → Dynamic from APIs (may fail due to session mismatch)
-    payer_instrument_token = config.get('p2p_payment_transfer.payer_instrument_token', None) or \
-                            getattr(context, 'fresh_instrument_token', None) or \
-                            getattr(context, 'payer_instrument_token', None) or \
-                            '3bdc3bc8-5d57-4451-85e5-aa8a9deb210d'
+    # ✨ TOKEN STRATEGY: Always prefer dynamic tokens from current test session
+    # Only fall back to config if dynamic tokens are not available
+    using_dynamic_tokens = hasattr(context, 'beneficiary_instrument_token') or \
+                          hasattr(context, 'fresh_instrument_token') or \
+                          hasattr(context, 'payer_instrument_token')
     
-    beneficiary_instrument_token = config.get('p2p_payment_transfer.beneficiary_instrument_token', None) or \
-                                   getattr(context, 'beneficiary_instrument_token', None) or \
-                                   'f8d6cb79-620e-45ac-8274-bcee7590f744'
+    if using_dynamic_tokens:
+        # Use fresh/dynamic tokens from current test session
+        payer_instrument_token = getattr(context, 'fresh_instrument_token', None) or \
+                                getattr(context, 'payer_instrument_token', None) or \
+                                config.get('p2p_payment_transfer.payer_instrument_token', '3bdc3bc8-5d57-4451-85e5-aa8a9deb210d')
+        
+        beneficiary_instrument_token = getattr(context, 'beneficiary_instrument_token', None) or \
+                                       config.get('p2p_payment_transfer.beneficiary_instrument_token', 'f8d6cb79-620e-45ac-8274-bcee7590f744')
+    else:
+        # Use static tokens from config (working Postman session with static PIN)
+        payer_instrument_token = config.get('p2p_payment_transfer.payer_instrument_token', None) or \
+                                getattr(context, 'fresh_instrument_token', None) or \
+                                getattr(context, 'payer_instrument_token', None) or \
+                                '3bdc3bc8-5d57-4451-85e5-aa8a9deb210d'
+        
+        beneficiary_instrument_token = config.get('p2p_payment_transfer.beneficiary_instrument_token', None) or \
+                                       getattr(context, 'beneficiary_instrument_token', None) or \
+                                       'f8d6cb79-620e-45ac-8274-bcee7590f744'
     
     # Extract other values (prioritize static from config for session consistency)
     instrument_id = config.get('p2p_payment_transfer.beneficiary_instrument_id', None) or \
@@ -89,21 +103,31 @@ def step_complete_payment_transfer_payload(context):
     else:
         logger.info(f"🔐 PIN Source: CONFIG (pin_verify fallback) ⚠️")
     
-    if config.get('p2p_payment_transfer.beneficiary_instrument_token'):
-        logger.info(f"🎯 Using STATIC beneficiary token from working Postman: {beneficiary_instrument_token[:20]}... ✅")
-    elif hasattr(context, 'beneficiary_instrument_token'):
-        logger.info(f"⚠️  Using DYNAMIC beneficiary token from Account Lookup: {beneficiary_instrument_token[:20]}...")
+    # Log token strategy
+    if using_dynamic_tokens:
+        logger.info(f"🎯 TOKEN STRATEGY: Using DYNAMIC tokens (current test session) ✅")
     else:
-        logger.info(f"❌ Using FALLBACK beneficiary token: {beneficiary_instrument_token[:20]}...")
+        logger.info(f"🎯 TOKEN STRATEGY: Using STATIC tokens (Postman session) ⚠️")
     
-    if config.get('p2p_payment_transfer.payer_instrument_token'):
-        logger.info(f"🎯 Using STATIC payer token from working Postman: {payer_instrument_token[:20]}... ✅")
-    elif hasattr(context, 'fresh_instrument_token'):
-        logger.info(f"⚠️  Using FRESH payer token from Payment Instruments API: {payer_instrument_token[:20]}...")
-    elif hasattr(context, 'payer_instrument_token'):
-        logger.info(f"⚠️  Using DYNAMIC payer token from Payment Options: {payer_instrument_token[:20]}...")
+    if using_dynamic_tokens and hasattr(context, 'beneficiary_instrument_token'):
+        logger.info(f"✅ Using DYNAMIC beneficiary token from Account Lookup: {beneficiary_instrument_token[:30]}...")
+    elif config.get('p2p_payment_transfer.beneficiary_instrument_token') and not using_dynamic_tokens:
+        logger.info(f"✅ Using STATIC beneficiary token from working Postman: {beneficiary_instrument_token[:30]}...")
+    elif hasattr(context, 'beneficiary_instrument_token'):
+        logger.info(f"⚠️  Using DYNAMIC beneficiary token from Account Lookup: {beneficiary_instrument_token[:30]}...")
     else:
-        logger.info(f"❌ Using FALLBACK payer token: {payer_instrument_token[:20]}...")
+        logger.info(f"❌ Using FALLBACK beneficiary token: {beneficiary_instrument_token[:30]}...")
+    
+    if using_dynamic_tokens and (hasattr(context, 'fresh_instrument_token') or hasattr(context, 'payer_instrument_token')):
+        logger.info(f"✅ Using DYNAMIC payer token: {payer_instrument_token[:30]}...")
+    elif config.get('p2p_payment_transfer.payer_instrument_token') and not using_dynamic_tokens:
+        logger.info(f"✅ Using STATIC payer token from working Postman: {payer_instrument_token[:30]}...")
+    elif hasattr(context, 'fresh_instrument_token'):
+        logger.info(f"⚠️  Using FRESH payer token from Payment Instruments API: {payer_instrument_token[:30]}...")
+    elif hasattr(context, 'payer_instrument_token'):
+        logger.info(f"⚠️  Using DYNAMIC payer token from Payment Options: {payer_instrument_token[:30]}...")
+    else:
+        logger.info(f"❌ Using FALLBACK payer token: {payer_instrument_token[:30]}...")
     logger.info("="*80)
     
     logger.info("="*80)
@@ -273,6 +297,10 @@ def step_payment_transfer_with_extracted_beneficiary(context):
 @given('I fetch payment instrument details')
 def step_fetch_payment_instrument_details(context):
     """Fetch payment instrument details from API to get fresh encrypted PIN and instrument data"""
+    # Build the base payload FIRST before fetching additional details
+    if not hasattr(context, 'payment_transfer_payload'):
+        step_complete_payment_transfer_payload(context)
+    
     # Get payer instrument ID from Payment Options (if available)
     payer_instrument_id = getattr(context, 'payer_instrument_id', None) or \
                          'c3722703-eefa-4e28-8b7f-40141575cfbf'  # Default from curl
@@ -370,21 +398,61 @@ def step_send_payment_transfer_request(context, endpoint):
         if hasattr(context, 'transfer_details'):
             logger.info("🔧 Overriding payload with transfer_details from feature file...")
             for key, value in context.transfer_details.items():
-                if key in payload:
-                    logger.info(f"  - Overriding {key}: {payload[key]} → {value}")
+                # Handle root-level fields
+                if key in ['feeAmount', 'currency', 'payerAmount', 'subType', 'channel']:
+                    logger.info(f"  - Overriding root.{key}: {payload.get(key)} → {value}")
                     payload[key] = value
+                # Handle beneficiaryDetails nested fields
+                elif key in ['payeeAmount', 'paymentMethod', 'provider', 'beneficiaryName', 'beneficiaryMobile']:
+                    if 'beneficiaryDetails' not in payload:
+                        payload['beneficiaryDetails'] = {}
+                    if key == 'beneficiaryName':
+                        payload['beneficiaryDetails']['name'] = value
+                        logger.info(f"  - Overriding beneficiaryDetails.name: {value}")
+                    elif key == 'beneficiaryMobile':
+                        # Update both notes and beneficiaryDetails if needed
+                        if 'notes' in payload:
+                            payload['notes']['beneficiaryMobileNumber'] = value
+                        logger.info(f"  - Setting beneficiaryMobileNumber in notes: {value}")
+                    else:
+                        payload['beneficiaryDetails'][key] = value
+                        logger.info(f"  - Overriding beneficiaryDetails.{key}: {value}")
+                # Handle notes/message field
+                elif key == 'message':
+                    if 'notes' not in payload:
+                        payload['notes'] = {}
+                    payload['notes']['message'] = value
+                    logger.info(f"  - Overriding notes.message: {value}")
                 else:
-                    logger.info(f"  - Adding {key}: {value}")
+                    # Unknown field - add to root
+                    logger.info(f"  - Adding unknown field to root.{key}: {value}")
                     payload[key] = value
                     
     elif hasattr(context, 'transfer_details'):
         # Build payload from transfer details
         step_complete_payment_transfer_payload(context)
         payload = context.payment_transfer_payload
-        # Override with custom details if available
+        # Override with custom details if available (use same logic as above)
         for key, value in context.transfer_details.items():
-            if key in payload:
+            # Handle root-level fields
+            if key in ['feeAmount', 'currency', 'payerAmount', 'subType', 'channel']:
                 payload[key] = value
+            # Handle beneficiaryDetails nested fields
+            elif key in ['payeeAmount', 'paymentMethod', 'provider', 'beneficiaryName', 'beneficiaryMobile']:
+                if 'beneficiaryDetails' not in payload:
+                    payload['beneficiaryDetails'] = {}
+                if key == 'beneficiaryName':
+                    payload['beneficiaryDetails']['name'] = value
+                elif key == 'beneficiaryMobile':
+                    if 'notes' in payload:
+                        payload['notes']['beneficiaryMobileNumber'] = value
+                else:
+                    payload['beneficiaryDetails'][key] = value
+            # Handle notes/message field
+            elif key == 'message':
+                if 'notes' not in payload:
+                    payload['notes'] = {}
+                payload['notes']['message'] = value
     else:
         logger.error("No payment transfer payload available")
         raise AssertionError("No payment transfer payload configured")
@@ -430,7 +498,7 @@ def step_send_payment_transfer_request(context, endpoint):
         start_time = time.time()
         response = context.base_test.api_client.post(
             endpoint,
-            json=payload,
+            json_data=payload,  # Fix: use json_data instead of json
             headers=headers
         )
         context.response = response

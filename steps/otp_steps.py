@@ -9,6 +9,15 @@ from behave import given, when, then
 @given('I am authenticated with valid app token')
 def step_authenticated_with_app_token(context):
     """Authenticate and get access token from Sasai."""
+    # Check if using cached authentication
+    if hasattr(context, 'global_auth_cache') and context.global_auth_cache.get('authenticated'):
+        # Use cached app token
+        context.app_token = context.global_auth_cache.get('app_token')
+        context.base_test.app_token = context.app_token
+        logger = context.base_test.logger
+        logger.debug("♻️  Using cached app token")
+        return
+    
     # Get token from appToken API
     api_client = context.base_test.api_client
     config = context.base_test.config

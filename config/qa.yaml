@@ -24,7 +24,7 @@ otp_verify:
 
 # OTP Request Configuration
 otp:
-  sender_id: "771222221" # 771222221 789124558 789124669 777222015 781707016
+  sender_id: "788830255" # 771222221 789124558 789124669 777222015 781707016
   country_code: "+263"
   default_purpose: "0" # 0 for authentication
   default_mode: "0" # 0 for SMS, 1 for Email
@@ -271,6 +271,103 @@ school_payment:
   invalid_school_code: "999999"
   invalid_amount: -1
   invalid_currency: "XXX"
+
+# Payment Reminder Configuration
+payment_reminder:
+  # Customer ID for setting reminders (from token payload)
+  customer_id: "ef1ebf57-8e9b-4c6c-be89-de72dfd7376c"
+  
+  # Default reminder settings
+  default_amount: "127"
+  default_currency: "ZWG"
+  default_alias: "NonRec Person Reminder"
+  default_frequency: "no-repeat"
+  
+  # Beneficiary details for P2P reminders
+  default_beneficiary: "+263789124669"
+  default_payment_type: "wallet"
+  
+  # Reminder ID for delete operations (can be extracted dynamically during tests)
+  reminder_id: "698c43199d9bea2a8e44ef6d"
+  
+  # Test data
+  test_amounts:
+    minimum: 1
+    normal: 100
+    large: 1000
+  
+  valid_frequencies:
+    - "no-repeat"
+    - "daily"
+    - "weekly"
+    - "monthly"
+  
+  valid_currencies:
+    - "ZWG"
+    - "USD"
+  
+  # Invalid test data for negative scenarios
+  invalid_frequency: "invalid-frequency"
+  invalid_currency: "INVALID"
+  invalid_beneficiary: "invalid-phone"
+  zero_amount: 0
+  negative_amount: -100
+
+# Payment Request Configuration (Request Money from Payer)
+payment_request:
+  # Endpoint for creating payment requests
+  endpoint: "/bff/v3/order/payment/request"
+  
+  # Default payment request settings
+  default_fee_amount: 0.0
+  default_currency: "ZWG"
+  default_channel: "sasai-super-app"
+  
+  # Customer ID (from token payload - beneficiary who is requesting payment)
+  customer_id: "ef1ebf57-8e9b-4c6c-be89-de72dfd7376c"
+  
+  # Test amounts
+  test_amounts:
+    minimum: 0.01
+    normal: 3
+    medium: 10
+    high: 100
+    maximum: 100000
+  
+  # Valid currencies
+  valid_currencies:
+    - "ZWG"
+    - "USD"
+  
+  # Test messages
+  test_messages:
+    default: "Test Payment Request"
+    custom: "Lunch payment request"
+    long: "This is a very long payment request message to test the maximum character limit allowed"
+    empty: ""
+  
+  # Account lookup configuration (prerequisite for payment request)
+  account_lookup:
+    endpoint: "/bff/v3/payment/account/lookup"
+    origin: "requestPay"
+    test_account_number: "+263789124669"
+  
+  # Invalid test data for negative scenarios
+  invalid_currency: "INVALID"
+  invalid_customer_id: "invalid-customer-id"
+  zero_amount: 0
+  negative_amount: -5
+
+# Payment Request Details Configuration (Get Order Details)
+payment_request_details:
+  endpoint: "/bff/v2/order/details"
+  # This endpoint requires order ID as path parameter
+  # Example: /bff/v2/order/details/177089-5320-994120
+  # Authentication: User token (Bearer token)
+  sample_order_id: "177089-5320-994120"
+  invalid_order_id: "INVALID-ORDER-ID-123"
+  nonexistent_order_id: "999999-9999-999999"
+  malformed_order_id: "12345"
 
 database:
   enabled: false

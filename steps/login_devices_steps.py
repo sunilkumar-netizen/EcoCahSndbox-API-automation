@@ -8,45 +8,71 @@ from behave import given, when, then
 
 @given('I have valid user token from PIN verification')
 def step_have_user_token_from_pin_verify(context):
-    """Get user token from PIN verification API."""
+    """Get user token from PIN verification API using sender_id from config."""
+    # Check if using cached authentication
+    if hasattr(context, 'global_auth_cache') and context.global_auth_cache.get('authenticated'):
+        # Use cached user token
+        context.user_token = context.global_auth_cache.get('user_token')
+        context.base_test.user_token = context.user_token
+        logger = context.base_test.logger
+        logger.debug("♻️  Using cached user token")
+        return
+    
     config = context.base_test.config
-    
-    # First, ensure we have user reference ID (from OTP or use default)
-    if not hasattr(context, 'user_reference_id'):
-        api_client = context.base_test.api_client
-        access_token = getattr(context, 'access_token', '')
-        
-        otp_request_data = {
-            'senderId': config.get('otp.sender_id'),
-            'countryCode': config.get('otp.country_code'),
-            'purpose': config.get('otp.default_purpose'),
-            'otpMode': config.get('otp.default_mode')
-        }
-        
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {access_token}'
-        }
-        
-        try:
-            otp_response = api_client.post(
-                endpoint='/bff/v2/auth/otp/request',
-                json_data=otp_request_data,
-                headers=headers
-            )
-            
-            if otp_response.status_code == 200:
-                otp_data = otp_response.json()
-                context.user_reference_id = otp_data.get('userReferenceId', 
-                    config.get('pin_verify.default_user_reference_id'))
-            else:
-                context.user_reference_id = config.get('pin_verify.default_user_reference_id')
-        except:
-            context.user_reference_id = config.get('pin_verify.default_user_reference_id')
-    
-    # Now perform PIN verification to get user token
     api_client = context.base_test.api_client
+    logger = context.base_test.logger
+    
+    # Get sender_id from config - this is the user we'll authenticate
+    sender_id = config.get('otp.sender_id')
+    logger.info(f"🔐 Starting authentication flow for sender_id: {sender_id}")
+    
+    # Ensure we have app token
     access_token = getattr(context, 'access_token', '')
+    if not access_token:
+        logger.error("❌ App token not available, cannot proceed with authentication")
+        raise ValueError("App token required for authentication flow")
+    
+    # Step 1: Request OTP for the sender_id
+    otp_request_data = {
+        'senderId': sender_id,
+        'countryCode': config.get('otp.country_code'),
+        'purpose': config.get('otp.default_purpose'),
+        'otpMode': config.get('otp.default_mode')
+    }
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {access_token}'
+    }
+    
+    logger.info(f"📱 Step 1: Requesting OTP for {sender_id}")
+    try:
+        otp_response = api_client.post(
+            endpoint='/bff/v2/auth/otp/request',
+            json_data=otp_request_data,
+            headers=headers
+        )
+        
+        if otp_response.status_code == 200:
+            otp_data = otp_response.json()
+            user_reference_id = otp_data.get('userReferenceId')
+            
+            if not user_reference_id:
+                logger.error("❌ No userReferenceId in OTP response")
+                raise ValueError("OTP response missing userReferenceId")
+            
+            context.user_reference_id = user_reference_id
+            logger.info(f"✅ OTP requested successfully, userReferenceId: {user_reference_id}")
+        else:
+            logger.error(f"❌ OTP request failed with status {otp_response.status_code}")
+            logger.error(f"Response: {otp_response.text}")
+            raise ValueError(f"OTP request failed: {otp_response.status_code}")
+    except Exception as e:
+        logger.error(f"❌ Error requesting OTP: {str(e)}")
+        raise
+    
+    # Step 2: Perform PIN verification to get user token
+    logger.info(f"🔑 Step 2: Performing PIN verification for userReferenceId: {context.user_reference_id}")
     
     pin_verify_data = {
         'pin': config.get('pin_verify.sample_encrypted_pin'),
@@ -58,11 +84,11 @@ def step_have_user_token_from_pin_verify(context):
         'azp': config.get('pin_verify.default_azp')
     }
     
-    headers = {
+    pin_headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {access_token}',
         'model': config.get('pin_verify.default_device_model'),
-        'deviceid': config.get('pin_verify.default_device_id')  # Required device ID
+        'deviceid': config.get('pin_verify.default_device_id')
     }
     
     # Build URL with query parameters
@@ -73,28 +99,48 @@ def step_have_user_token_from_pin_verify(context):
         pin_response = api_client.post(
             endpoint=url,
             json_data=pin_verify_data,
-            headers=headers
+            headers=pin_headers
         )
         
         if pin_response.status_code == 200:
             pin_data = pin_response.json()
-            context.user_token = pin_data.get('accessToken', '')
-            context.base_test.logger.info("User token obtained from PIN verification")
+            user_token = pin_data.get('accessToken', '')
+            
+            if not user_token:
+                logger.error("❌ No accessToken in PIN verify response")
+                raise ValueError("PIN verify response missing accessToken")
+            
+            context.user_token = user_token
+            logger.info(f"✅ User token obtained successfully for {sender_id}")
+            logger.info(f"🎫 Token: {user_token[:50]}...")
         else:
-            # Use a sample user token for testing
-            context.user_token = config.get('login_devices.sample_user_token', '')
-            context.base_test.logger.warning(f"PIN verification failed with status {pin_response.status_code}, using sample token")
+            logger.error(f"❌ PIN verification failed with status {pin_response.status_code}")
+            logger.error(f"Response: {pin_response.text}")
+            raise ValueError(f"PIN verification failed: {pin_response.status_code}")
     except Exception as e:
-        context.user_token = config.get('login_devices.sample_user_token', '')
-        context.base_test.logger.error(f"Error getting user token: {str(e)}")
+        logger.error(f"❌ Error during PIN verification: {str(e)}")
+        raise
 
 
 @given('I have valid user authentication')
 def step_have_valid_user_authentication(context):
-    """Ensure we have valid user token for authentication."""
+    """
+    Ensure we have valid user token for authentication.
+    This will generate a fresh token using the sender_id from config.
+    """
+    logger = context.base_test.logger
+    
+    # Always generate fresh token - don't rely on cached tokens
+    logger.info("🔄 Generating fresh user authentication token")
+    step_have_user_token_from_pin_verify(context)
+    
+    # Verify we have a valid token
     if not hasattr(context, 'user_token') or not context.user_token:
-        step_have_user_token_from_pin_verify(context)
-    context.base_test.logger.info("Valid user authentication available")
+        logger.error("❌ Failed to obtain valid user token")
+        raise ValueError("User authentication failed - no valid token")
+    
+    logger.info("✅ Valid user authentication available")
+    logger.info(f"🎫 Using token: {context.user_token[:50]}...")
 
 
 @given('I have no authentication token')

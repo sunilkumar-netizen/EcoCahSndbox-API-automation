@@ -10,7 +10,7 @@ Feature: Login- PIN Verify
         Given API is available
         And I am authenticated with valid app token
 
-    @smoke @pin_verify @sasai
+    @pin_verify @positive @sasai
     Scenario: Verify PIN with valid parameters
         Given I have valid PIN verification details
         When I send PIN verification request to "/bff/v4/auth/pin/verify"
